@@ -5,9 +5,10 @@ from storage.animatedObject import AnimatedObject
 from storage.gameVars import *
 
 class Entity(AnimatedObject):
-    def __init__(self, animSet, name, hp):
+    def __init__(self, game, animSet, name, hp):
         super().__init__(animSet)
         self.hp = hp
+        self.game = game
         self.name = name
         self.invFrames = 0
         self.dead = False
@@ -35,7 +36,7 @@ class Entity(AnimatedObject):
         self.clampPosition()
         if self.invFrames > 0:
             self.invFrames -= 1
+        self.rect.center = self.pos
     
     def clampPosition(self):
-        self.pos.x = max(0, min(self.pos.x, WIDTH - 20))
-        self.pos.y = max(0, min(self.pos.y, HEIGHT - 20))
+        pass

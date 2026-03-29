@@ -9,7 +9,7 @@ from storage.gameVars import *
 
 class Reddie(Entity):
     def __init__(self, game, hp, following, attackType, dropChance):
-        super().__init__(game.enemyAnimSet, "Reddie", hp)
+        super().__init__(game, game.enemyAnimSet, "Reddie", hp)
         self.game = game
         self.pos = vec(random.randint(50,350), random.randint(200,400))
         self.following = following
@@ -78,11 +78,11 @@ class Reddie(Entity):
 
     def update(self):
         self.renderAnim()
-        self.updateEntity()
 
         if not self.dead:
             self.posUpdate()
             self.attack()
+            self.updateEntity()
         else:
             self.deleteTimer -= 1
             if self.deleteTimer <= 0:
@@ -93,4 +93,3 @@ class Reddie(Entity):
         
         self.switchTimer -= 1
         self.attackCooldown -= 1
-        self.rect.center = self.pos

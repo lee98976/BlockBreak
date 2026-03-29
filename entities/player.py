@@ -7,7 +7,7 @@ from storage.gameVars import *
 
 class Player(Entity):
     def __init__(self, game, healthBar):
-        super().__init__(game.playerAnimSet, "Player", 5)
+        super().__init__(game, game.playerAnimSet, "Player", 5)
         self.pos = vec(200, 200)
         self.despawnTime = 300
 
@@ -51,25 +51,28 @@ class Player(Entity):
             dashSpeed = 12
 
             if pressed_keys[K_LEFT]:
-                self.dashVector.x = -dashSpeed
+                self.dashVector.x = -1
             if pressed_keys[K_RIGHT]:
-                self.dashVector.x = dashSpeed
+                self.dashVector.x = 1
             if pressed_keys[K_UP]:
-                self.dashVector.y = -dashSpeed
+                self.dashVector.y = -1
             if pressed_keys[K_DOWN]:
-                self.dashVector.y = dashSpeed
+                self.dashVector.y = 1
 
             if pressed_keys[K_LEFT] or pressed_keys[K_RIGHT] or pressed_keys[K_UP] or pressed_keys[K_DOWN]:
+                self.dashVector = self.dashVector.normalize() * dashSpeed
                 return
 
             if self.lastInput == K_LEFT:
-                self.dashVector.x = -dashSpeed
+                self.dashVector.x = -1
             if self.lastInput == K_RIGHT:
-                self.dashVector.x = dashSpeed
+                self.dashVector.x = 1
             if self.lastInput == K_UP:
-                self.dashVector.y = -dashSpeed
+                self.dashVector.y = -1
             if self.lastInput == K_DOWN:
-                self.dashVector.y = dashSpeed
+                self.dashVector.y = 1
+            
+            self.dashVector = self.dashVector.normalize() * dashSpeed
 
     def onDeath(self):
         self.changeAnim(2)
@@ -80,11 +83,11 @@ class Player(Entity):
     def update(self):
         self.renderAnim()
 
+        self.lastRoom = self.game.get_current_room()
         if not self.dead:
-            self.updateEntity()
             self.posUpdate()
             self.dash()
-            self.rect.center = self.pos
+            self.updateEntity()
             self.dashFrames -= 1
         else:
             self.despawnTime -= 1
@@ -94,3 +97,20 @@ class Player(Entity):
 
         if self.dashFrames <= 0:
             self.isDashing = False
+    
+    # def clampPosition(self):
+    #     if not self.lastRoom:
+    #         return
+
+    #     half_w = self.rect.width / 2
+    #     half_h = self.rect.height / 2
+
+    #     self.pos.x = max(
+    #         self.lastRoom.rect.left + half_w,
+    #         min(self.lastRoom.rect.right - half_w, self.pos.x)
+    #     )
+
+    #     self.pos.y = max(
+    #         self.lastRoom.rect.top + half_h,
+    #         min(self.lastRoom.rect.bottom - half_h, self.pos.y)
+    #     )

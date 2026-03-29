@@ -7,7 +7,7 @@ from entities.reddie import Reddie
 
 class Boss(Entity):
     def __init__(self, game):
-        super().__init__(game.bossAnimSet, "Bossy", 999)
+        super().__init__(game, game.bossAnimSet, "Bossy", 999)
         self.game = game
         self.pos = pygame.Vector2(200,80)
         self.active = False
@@ -62,7 +62,6 @@ class Boss(Entity):
             for l in self.lasers:
                 l.angle += 0.005 * self.CW * self.mag
                 l.update()
-        self.rect.center = self.pos
 
     def drawLasers(self, screen):
         if not self.active:

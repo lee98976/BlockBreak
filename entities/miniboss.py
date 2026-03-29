@@ -5,7 +5,7 @@ from entities.reddie import Reddie
 
 class MiniBoss(Entity):
     def __init__(self, game, player, enemy_group, x):
-        super().__init__(game.miniBossAnimSet, "MiniBoss", 2)
+        super().__init__(game, game.miniBossAnimSet, "MiniBoss", 2)
         self.game = game
         self.player = player
         self.enemy_group = enemy_group
@@ -38,4 +38,3 @@ class MiniBoss(Entity):
                 self.kill()
         self.renderAnim()
         self.updateEntity()
-        self.rect.center = self.pos
