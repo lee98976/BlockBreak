@@ -1,0 +1,209 @@
+
+import pygame
+from pygame.locals import *
+import sys
+import random
+import math
+
+from gameVars import *
+from game_manager import Game
+from animatedObject import AnimatedObject, processImage
+from entity import Entity
+from entities.player import Player
+from entities.pickups import HealthPack
+from entities.reddie import Reddie
+from entities.miniboss import MiniBoss
+from entities.laser import Laser
+from entities.boss import Boss
+from entities.heart import Heart
+from entities.healthbar import HealthBar
+
+pygame.init()
+clock = pygame.time.Clock()
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Alyss")
+
+game = Game()
+
+pygame.init()
+clock = pygame.time.Clock()
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Alyss")
+
+game.playerAnimSet = {
+    "pos": (200, 200),
+
+    "img_paths": [
+        "assets/playerBasic.png",
+        "assets/playerDash.png",
+        *[f"assets/playerDeath{i}.png" for i in range(1, 11)],
+        "assets/playerProjectile1.png",
+        "assets/playerProjectile2.png"
+    ],
+
+    "anims": [
+
+        [(0, 200)],
+
+        [(1, 12)],
+
+        [(i, 8) for i in range(2, 11)] + [(11, 9999)]
+
+    ]
+}
+
+game.enemyAnimSet = {
+    "pos": (200, 200),
+
+    "img_paths": [
+        "assets/enemyAwakened.png",
+        "assets/enemyDeath1.png",
+        "assets/enemyDeath2.png",
+        "assets/enemyDeath3.png",
+        "assets/enemyProjectile1.png",
+        "assets/enemyProjectile2.png"
+    ],
+
+    "anims": [
+
+        [(0, 200)],
+
+        [(1,10),(2,10),(3,10)],
+
+        [(4,6),(5,6)]
+
+    ]
+}
+
+game.miniBossAnimSet = {
+    "pos": (200, 200),
+
+    "img_paths": [
+        "assets/miniBossAwakened.png",
+        *[f"assets/miniBossDeath{i}.png" for i in range(1, 13)]
+    ],
+
+    "anims": [
+
+        [(0, 200)],
+
+        [(i,6) for i in range(1,12)] + [(12, 9999)]
+
+    ]
+}
+
+game.bossAnimSet = {
+    "pos": (200, 200),
+
+    "img_paths": [
+        "assets/bossAwakened.png",
+        "assets/bossIdle.png",
+        "assets/bossIdle1.png",
+        "assets/bossIdle2.png",
+        "assets/bossIdle3.png",
+        *[f"assets/bossSummon{i}.png" for i in range(1,4)],
+        *[f"assets/bossDeath{i}.png" for i in range(1,12)]
+    ],
+
+    "anims": [
+
+        [(1,10),(2,10),(3,10),(4,10)],
+
+        [(5,8),(6,8),(7,8)],
+
+        [(i,6) for i in range(8,18)] + [(18, 9999)] 
+
+    ]
+}
+
+game.healthPackSet = {
+    "pos": (0,0),
+
+    "img_paths": [
+        "assets/healOrb.png"
+    ],
+
+    "anims": [
+        [(0,200)]
+    ]
+}
+
+game.friendly_sprites = pygame.sprite.Group()
+game.healthBar = HealthBar(game.friendly_sprites)
+game.player = Player(game.playerAnimSet, game.healthBar)
+game.healthBar.updateHealth(game.player.hp)
+game.friendly_sprites.add(game.player)
+
+game.enemy_sprites = pygame.sprite.Group()
+miniBoss1 = MiniBoss(game, game.miniBossAnimSet, game.player, game.enemy_sprites, 120)
+miniBoss2 = MiniBoss(game, game.miniBossAnimSet, game.player, game.enemy_sprites, 280)
+game.enemy_sprites.add(miniBoss1)
+game.enemy_sprites.add(miniBoss2)
+
+boss = Boss(game, game.bossAnimSet, game.player, game.enemy_sprites)
+game.enemy_sprites.add(boss)
+
+
+hasActivated = False
+
+while True:
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+    if miniBoss1.dead and miniBoss2.dead and not hasActivated:
+        boss.activate()
+        hasActivated = True
+
+    boss.checkDashDamage(game.player)
+
+    if boss.deadCheck():
+        boss.takeDamage(9999)
+
+    hits = pygame.sprite.spritecollide(game.player, game.enemy_sprites, False)
+
+    for enemy in hits:
+        if game.player.isDashing:
+            enemy.takeDamage(1)
+        elif hasattr(enemy, "isHarmful") and enemy.isHarmful:
+            game.player.takeDamage(1, 60)
+
+    for sprite in game.friendly_sprites:
+        if isinstance(sprite, HealthPack):
+            if game.player.rect.colliderect(sprite.rect):
+                if game.player.hp < 5:
+                    game.player.takeDamage(-1, 0)
+                    sprite.kill()
+
+    offset = vec(0, 0)
+    if boss.active:
+        offset = vec(random.randint(-2, 2), random.randint(-2, 2))
+
+    screen.fill((255, 255, 255))
+    game.friendly_sprites.update()
+    game.enemy_sprites.update()
+    for s in game.friendly_sprites:
+        screen.blit(s.image, s.rect.topleft + offset)
+    for s in game.enemy_sprites:
+        screen.blit(s.image, s.rect.topleft + offset)
+    boss.drawLasers(screen)
+    pygame.display.update()
+    game.gameTime += 1
+    clock.tick(FPS)
+
+
+'''
+CREDITS:
+Generative AI (ChatGPT) was utilized to speed up the busy work of the code in order to finish within a timely matter, including creating the boss, mini-boss code, as well as the animSets (they would take very very long to make by hand). Some stylizing effects such as the screen shake as well as the sine wave movement code was generated by ChatGPT in order to polish up the game.
+
+The animation system, class system is my work, and the player and basic enemy is of notably our creation. We have tweaked them numerous times, giving the Reddies complex AI that enhances the game difficulty to notable levels. We have also thought of the dash attack system, inspired by games such as Just Shapes and Beats (JSAB), and Celeste.
+
+Furthermore, we fully understand the generative AI's code in this work, evident as we are able to tweak the code and fix bugs in the generated code, such fixing the bug when the boss did not have a kill timer to remove itself from being rendered after hp hits 0.
+
+Codio's X Server extension is used to obtain a visual screen for the application.
+
+Fun Fact: The assets are completely original, with my partner creating over 60 or so 8 by 8 pixel art sprites for the game.
+'''
