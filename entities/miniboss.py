@@ -4,8 +4,8 @@ from entity import Entity
 from entities.reddie import Reddie
 
 class MiniBoss(Entity):
-    def __init__(self, game, animSet, player, enemy_group, x):
-        super().__init__(animSet, "MiniBoss", 2)
+    def __init__(self, game, player, enemy_group, x):
+        super().__init__(game.miniBossAnimSet, "MiniBoss", 2)
         self.game = game
         self.player = player
         self.enemy_group = enemy_group
@@ -16,7 +16,7 @@ class MiniBoss(Entity):
 
     def spawnWave(self):
         for i in range(self.waveSize):
-            e = Reddie(self.game, self.game.enemyAnimSet, 1, self.player, "melee", 0.1)
+            e = Reddie(self.game, 1, self.player, "melee", 0.1)
             self.enemy_group.add(e)
 
     def takeDamage(self, dmg):

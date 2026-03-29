@@ -3,11 +3,11 @@ from pygame.locals import *
 import sys
 
 from entity import Entity
-from gameVars import *
+from storage.gameVars import *
 
 class Player(Entity):
-    def __init__(self, animSet, healthBar):
-        super().__init__(animSet, "Player", 5)
+    def __init__(self, game, healthBar):
+        super().__init__(game.playerAnimSet, "Player", 5)
         self.pos = vec(200, 200)
         self.despawnTime = 300
 

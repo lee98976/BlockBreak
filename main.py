@@ -5,9 +5,9 @@ import sys
 import random
 import math
 
-from gameVars import *
+from storage.gameVars import *
 from game_manager import Game
-from animatedObject import AnimatedObject, processImage
+from storage.animatedObject import AnimatedObject
 from entity import Entity
 from entities.player import Player
 from entities.pickups import HealthPack
@@ -32,121 +32,27 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Alyss")
 
-game.playerAnimSet = {
-    "pos": (200, 200),
-
-    "img_paths": [
-        "assets/playerBasic.png",
-        "assets/playerDash.png",
-        *[f"assets/playerDeath{i}.png" for i in range(1, 11)],
-        "assets/playerProjectile1.png",
-        "assets/playerProjectile2.png"
-    ],
-
-    "anims": [
-
-        [(0, 200)],
-
-        [(1, 12)],
-
-        [(i, 8) for i in range(2, 11)] + [(11, 9999)]
-
-    ]
-}
-
-game.enemyAnimSet = {
-    "pos": (200, 200),
-
-    "img_paths": [
-        "assets/enemyAwakened.png",
-        "assets/enemyDeath1.png",
-        "assets/enemyDeath2.png",
-        "assets/enemyDeath3.png",
-        "assets/enemyProjectile1.png",
-        "assets/enemyProjectile2.png"
-    ],
-
-    "anims": [
-
-        [(0, 200)],
-
-        [(1,10),(2,10),(3,10)],
-
-        [(4,6),(5,6)]
-
-    ]
-}
-
-game.miniBossAnimSet = {
-    "pos": (200, 200),
-
-    "img_paths": [
-        "assets/miniBossAwakened.png",
-        *[f"assets/miniBossDeath{i}.png" for i in range(1, 13)]
-    ],
-
-    "anims": [
-
-        [(0, 200)],
-
-        [(i,6) for i in range(1,12)] + [(12, 9999)]
-
-    ]
-}
-
-game.bossAnimSet = {
-    "pos": (200, 200),
-
-    "img_paths": [
-        "assets/bossAwakened.png",
-        "assets/bossIdle.png",
-        "assets/bossIdle1.png",
-        "assets/bossIdle2.png",
-        "assets/bossIdle3.png",
-        *[f"assets/bossSummon{i}.png" for i in range(1,4)],
-        *[f"assets/bossDeath{i}.png" for i in range(1,12)]
-    ],
-
-    "anims": [
-
-        [(1,10),(2,10),(3,10),(4,10)],
-
-        [(5,8),(6,8),(7,8)],
-
-        [(i,6) for i in range(8,18)] + [(18, 9999)] 
-
-    ]
-}
-
-game.healthPackSet = {
-    "pos": (0,0),
-
-    "img_paths": [
-        "assets/healOrb.png"
-    ],
-
-    "anims": [
-        [(0,200)]
-    ]
-}
+game.friendly_sprites = pygame.sprite.Group()
+game.healthBar = HealthBar(game)
+game.player = Player(game, game.healthBar)
+game.healthBar.updateHealth(game.player.hp)
+game.friendly_sprites.add(game.player)
 
 game.friendly_sprites = pygame.sprite.Group()
-game.healthBar = HealthBar(game.friendly_sprites)
-game.player = Player(game.playerAnimSet, game.healthBar)
+game.healthBar = HealthBar(game)
+game.player = Player(game, game.healthBar)
 game.healthBar.updateHealth(game.player.hp)
 game.friendly_sprites.add(game.player)
 
 game.enemy_sprites = pygame.sprite.Group()
-miniBoss1 = MiniBoss(game, game.miniBossAnimSet, game.player, game.enemy_sprites, 120)
-miniBoss2 = MiniBoss(game, game.miniBossAnimSet, game.player, game.enemy_sprites, 280)
+miniBoss1 = MiniBoss(game, game.player, game.enemy_sprites, 120)
+miniBoss2 = MiniBoss(game, game.player, game.enemy_sprites, 280)
 game.enemy_sprites.add(miniBoss1)
 game.enemy_sprites.add(miniBoss2)
 
-boss = Boss(game, game.bossAnimSet, game.player, game.enemy_sprites)
-game.enemy_sprites.add(boss)
-
-
+boss = Boss(game)
 hasActivated = False
+game.enemy_sprites.add(boss)
 
 while True:
     for event in pygame.event.get():

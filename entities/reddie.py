@@ -5,11 +5,11 @@ import random
 
 from entity import Entity
 from entities.pickups import HealthPack
-from gameVars import *
+from storage.gameVars import *
 
 class Reddie(Entity):
-    def __init__(self, game, animSet, hp, following, attackType, dropChance):
-        super().__init__(animSet, "Reddie", hp)
+    def __init__(self, game, hp, following, attackType, dropChance):
+        super().__init__(game.enemyAnimSet, "Reddie", hp)
         self.game = game
         self.pos = vec(random.randint(50,350), random.randint(200,400))
         self.following = following
@@ -87,7 +87,7 @@ class Reddie(Entity):
             self.deleteTimer -= 1
             if self.deleteTimer <= 0:
                 if random.random() < self.dropChance:
-                    hp = HealthPack(self.game.healthPackSet, self.pos)
+                    hp = HealthPack(self.game, self.pos)
                     self.game.friendly_sprites.add(hp)
                 self.kill()
         

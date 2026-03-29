@@ -1,5 +1,5 @@
 import pygame
-from animatedObject import AnimatedObject
+from storage.animatedObject import AnimatedObject
 
 class Heart(AnimatedObject):
     def __init__(self, animSet, pos):

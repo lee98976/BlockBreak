@@ -6,10 +6,9 @@ from entities.laser import Laser
 from entities.reddie import Reddie
 
 class Boss(Entity):
-    def __init__(self, game, animSet, player, enemy_group):
-        super().__init__(animSet, "Bossy", 999)
+    def __init__(self, game):
+        super().__init__(game.bossAnimSet, "Bossy", 999)
         self.game = game
-        self.player = player
         self.pos = pygame.Vector2(200,80)
         self.active = False
         self.angle = 0
@@ -19,7 +18,7 @@ class Boss(Entity):
         self.goToMag = 1.5
         self.spawnTimer = 0
         self.deleteTimer = 300
-        self.enemy_group = enemy_group
+
         self.lasers = [Laser(0.25 * i * math.pi) for i in range(0, 8)]
 
     def activate(self):
@@ -55,8 +54,8 @@ class Boss(Entity):
                 self.kill()
         if self.active:
             if self.spawnTimer <= 0:
-                e = Reddie(self.game, self.game.enemyAnimSet, 1, self.player, "melee", 0.5)
-                self.enemy_group.add(e)
+                e = Reddie(self.game, 1, self.game.player, "melee", 0.5)
+                self.game.enemy_sprites.add(e)
                 self.spawnTimer = 90
             self.spawnTimer -= 1
             self.angle += 0.005 * self.CW * self.mag

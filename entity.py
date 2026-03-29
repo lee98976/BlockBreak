@@ -1,8 +1,8 @@
 import pygame
 from pygame.locals import *
 
-from animatedObject import AnimatedObject, processImage
-from gameVars import *
+from storage.animatedObject import AnimatedObject
+from storage.gameVars import *
 
 class Entity(AnimatedObject):
     def __init__(self, animSet, name, hp):
