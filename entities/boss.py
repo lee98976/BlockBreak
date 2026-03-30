@@ -4,6 +4,7 @@ import pygame
 from entity import Entity
 from entities.laser import Laser
 from entities.reddie import Reddie
+from storage.gameVars import vec
 
 class Boss(Entity):
     def __init__(self, game):

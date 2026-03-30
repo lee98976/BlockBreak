@@ -2,6 +2,7 @@ import math
 import pygame
 from entity import Entity
 from entities.reddie import Reddie
+from storage.gameVars import vec
 
 class MiniBoss(Entity):
     def __init__(self, game, player, enemy_group, x):

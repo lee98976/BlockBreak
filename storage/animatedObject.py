@@ -4,12 +4,14 @@ from pygame.locals import *
 from storage.gameVars import *
 
 class AnimatedObject(pygame.sprite.Sprite):
-    def __init__(self, animSet):
+    def __init__(self, animSet, rectDimensions=None):
         super().__init__()
 
         self.images = animSet["images"]
         self.image = self.images[0]
+
         self.rect = self.image.get_bounding_rect()
+        
 
         self.anims = animSet["anims"] # dictionary that describes anim states
         self.defaultAnim = 0

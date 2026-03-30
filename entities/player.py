@@ -19,27 +19,26 @@ class Player(Entity):
         self.healthBar = healthBar
 
     def posUpdate(self):
-        self.change = vec(0,0)
+        self.vel = vec(0,0)
 
         if self.isDashing:
-            self.change = self.dashVector
+            self.vel = self.dashVector
             self.dashVector *= 0.94
         else:
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[K_LEFT]:
                 self.lastInput = K_LEFT
-                self.change.x = -2
+                self.vel.x = -2
             if pressed_keys[K_RIGHT]:
                 self.lastInput = K_RIGHT
-                self.change.x = 2
+                self.vel.x = 2
             if pressed_keys[K_UP]:
                 self.lastInput = K_UP
-                self.change.y = -2
+                self.vel.y = -2
             if pressed_keys[K_DOWN]:
                 self.lastInput = K_DOWN
-                self.change.y = 2
+                self.vel.y = 2
 
-        self.pos += self.change
 
     def dash(self):
         pressed_keys = pygame.key.get_pressed()
@@ -97,6 +96,7 @@ class Player(Entity):
 
         if self.dashFrames <= 0:
             self.isDashing = False
+
     
     # def clampPosition(self):
     #     if not self.lastRoom:
