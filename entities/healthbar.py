@@ -2,9 +2,9 @@ from entities.heart import Heart
 
 class HealthBar:
     def __init__(self, game):
-        self.hearts = [Heart(game.heartSet, (i * 40 + 20, 420)) for i in range(5)]
+        self.hearts = [Heart(game.heartSet, (i * 40 + 40, 460)) for i in range(5)]
         for i in self.hearts:
-            game.friendly_sprites.add(i)
+            game.ui_sprites.add(i)
     
     def updateHealth(self, hp):
         for i in range(1, 5 + 1):

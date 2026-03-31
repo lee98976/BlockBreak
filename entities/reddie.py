@@ -11,7 +11,7 @@ class Reddie(Entity):
     def __init__(self, game, hp, following, attackType, dropChance):
         super().__init__(game, game.enemyAnimSet, "Reddie", hp)
         self.game = game
-        self.pos = vec(random.randint(50,350), random.randint(200,400))
+        self.pos = vec(random.randint(250,260), random.randint(250,260))
         self.following = following
         self.attackType = attackType
         self.attackCooldown = 0

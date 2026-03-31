@@ -38,12 +38,6 @@ game.player = Player(game, game.healthBar)
 game.healthBar.updateHealth(game.player.hp)
 game.friendly_sprites.add(game.player)
 
-game.friendly_sprites = pygame.sprite.Group()
-game.healthBar = HealthBar(game)
-game.player = Player(game, game.healthBar)
-game.healthBar.updateHealth(game.player.hp)
-game.friendly_sprites.add(game.player)
-
 game.enemy_sprites = pygame.sprite.Group()
 miniBoss1 = MiniBoss(game, game.player, game.enemy_sprites, 120)
 miniBoss2 = MiniBoss(game, game.player, game.enemy_sprites, 280)
@@ -95,12 +89,16 @@ while True:
 
     game.update_camera()
     screen.fill((255, 255, 255))
+
     game.friendly_sprites.update()
     game.enemy_sprites.update()
+    game.ui_sprites.update()
 
     for room in game.rooms.values():
-        room.draw_tiles(screen, game.camera)
-    
+        game.tileHandler.draw(screen, room.world_x, room.world_y, room.tiles, game.camera)
+
+    for s in game.ui_sprites:
+        screen.blit(s.image, s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
     for s in game.friendly_sprites:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
         draw_debug_rect(screen, s.rect, game.camera)

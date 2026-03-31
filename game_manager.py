@@ -1,16 +1,12 @@
+import os
 import pygame
+import random
 
 from room import Room
 from storage.gameVars import *
 from storage.animSets import *
-
-def processImage(path, scale):
-    unscaled = pygame.image.load(path).convert_alpha()
-
-    newWidth = int(unscaled.get_width() * scale)
-    newHeight = int(unscaled.get_height() * scale)
-
-    return pygame.transform.scale(unscaled, (newWidth, newHeight))
+from storage.imageUtility import *
+from tileHandler import *
 
 def build_animset(animSet, scale=4):
     return {
@@ -25,6 +21,8 @@ class Game:
         # manage entities
         self.friendly_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.ui_sprites = pygame.sprite.Group()
+        
         self.healthBar = None
         self.player = None
 
@@ -37,6 +35,9 @@ class Game:
         self.heartSet = heartSet
 
         self.buildAnimSets()
+
+        # tile sets!
+        self.tileHandler = TileHandler(self)
 
         # room generation!
         self.rooms = {}
