@@ -56,8 +56,8 @@ class Game:
                 room = Room(x, y, self.room_width, self.room_height)
                 self.rooms[(x, y)] = room
     
-    def get_current_room(self):
-        px, py = self.player.pos
+    def get_current_room(self, entity):
+        px, py = entity.pos
 
         room_x = int(px // self.room_width)
         room_y = int(py // self.room_height)
@@ -65,7 +65,7 @@ class Game:
         return self.rooms.get((room_x, room_y))
     
     def get_room_center(self):
-        room = self.get_current_room()
+        room = self.get_current_room(self.player)
         if not room:
             return pygame.Vector2(0, 0)
 

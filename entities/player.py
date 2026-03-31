@@ -82,7 +82,7 @@ class Player(Entity):
     def update(self):
         self.renderAnim()
 
-        self.lastRoom = self.game.get_current_room()
+        self.lastRoom = self.game.get_current_room(self)
         if not self.dead:
             self.posUpdate()
             self.dash()

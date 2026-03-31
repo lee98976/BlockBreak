@@ -50,7 +50,7 @@ class Entity(AnimatedObject):
         self.rect.center = self.pos
 
     def collide(self, axis):
-        for wall in self.game.get_current_room().wall_rects:
+        for wall in self.game.get_current_room(self).wall_rects:
             if not self.rect.colliderect(wall):
                 continue
 

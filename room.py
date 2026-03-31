@@ -19,7 +19,7 @@ class Room:
         self.completed = False
 
         self.tile_size = 32
-        self.tiles = ["1111111001111111"] + ["1000000000000001" for i in range(6)] + ["0000000000000000" for i in range(2)] + ["1000000000000001" for i in range(6)] + ["1111111001111111"]
+        self.tiles = ["1111111001111111"] + ["1000000000000001" for i in range(6)] + ["0000000110000000" for i in range(2)] + ["1000000000000001" for i in range(6)] + ["1111111001111111"]
         self.wall_rects = self.get_wall_rects()
     
     def draw_tiles(self, screen, camera):
