@@ -47,7 +47,7 @@ class Player(Entity):
             self.isDashing = True
             self.dashFrames = 13
             self.dashVector = vec(0,0)
-            dashSpeed = 12
+            dashSpeed = 13
 
             if pressed_keys[K_LEFT]:
                 self.dashVector.x = -1

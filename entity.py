@@ -4,6 +4,11 @@ from pygame.locals import *
 from storage.animatedObject import AnimatedObject
 from storage.gameVars import *
 
+def draw_debug_rect(screen, rect, camera):
+    offset = rect.topleft - camera + vec(WIDTH/2, HEIGHT/2)
+    debug_rect = pygame.Rect(offset, rect.size)
+    pygame.draw.rect(screen, (0, 0, 0), debug_rect, 2)
+
 class Entity(AnimatedObject):
     def __init__(self, game, animSet, name, hp):
         super().__init__(animSet)
@@ -61,7 +66,6 @@ class Entity(AnimatedObject):
                     self.rect.left = wall.right
 
                 self.pos.x = self.rect.centerx
-
             elif axis == "y":
                 if self.vel.y > 0:
                     self.rect.bottom = wall.top
@@ -69,3 +73,5 @@ class Entity(AnimatedObject):
                     self.rect.top = wall.bottom
 
                 self.pos.y = self.rect.centery
+            
+            

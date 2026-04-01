@@ -24,7 +24,7 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Alyss")
 
-game = Game()
+game = Game(screen)
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -95,7 +95,7 @@ while True:
     game.ui_sprites.update()
 
     for room in game.rooms.values():
-        game.tileHandler.draw(screen, room.world_x, room.world_y, room.tiles, game.camera)
+        game.tileHandler.draw(room.world_x, room.world_y, room.tiles, game.camera)
 
     for s in game.ui_sprites:
         screen.blit(s.image, s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)

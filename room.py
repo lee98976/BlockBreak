@@ -18,30 +18,36 @@ class Room:
 
         self.completed = False
 
-        self.tiles = [
-            ["blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","empty","empty","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal"],
+        # self.tiles = [
+        #     ["blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","empty","empty","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal"],
 
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
 
-            ["empty","empty","empty","empty","empty","empty","empty","blackMetal","blackMetal","empty","empty","empty","empty","empty","empty","empty"],
-            ["empty","empty","empty","empty","empty","empty","empty","blackMetal","blackMetal","empty","empty","empty","empty","empty","empty","empty"],
+        #     ["empty","empty","empty","empty","empty","empty","empty","blackMetal","blackMetal","empty","empty","empty","empty","empty","empty","empty"],
+        #     ["empty","empty","empty","empty","empty","empty","empty","blackMetal","blackMetal","empty","empty","empty","empty","empty","empty","empty"],
 
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
-            ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
+        #     ["blackMetal","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","empty","blackMetal"],
 
-            ["blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","empty","empty","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal"],
-        ]
+        #     ["blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","empty","empty","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal","blackMetal"],
+        # ]
 
-        # for collision purposes
+        # # for collision purposes
+        # self.wall_rects = self.get_wall_rects()
+        self.tiles = []
+        self.wall_rects = []
+
+    def update_tiles(self, tiles):
+        self.tiles = tiles
         self.wall_rects = self.get_wall_rects()
 
     def get_tile_rect(self, x, y):

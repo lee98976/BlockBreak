@@ -5,13 +5,18 @@ import random
 from storage.imageUtility import *
 from storage.gameVars import *
 
+def draw_debug_rect(screen, rect, camera):
+    offset = rect.topleft - camera + vec(WIDTH/2, HEIGHT/2)
+    debug_rect = pygame.Rect(offset, rect.size)
+    pygame.draw.rect(screen, (0, 0, 0), debug_rect, 2)
+
 class TileHandler:
     def __init__(self, game):
         self.tiles = self.load_tiles("assets/tiles")
         self.game = game
 
         self.render_cache = {}
-        self.refresh_rate = 30 
+        self.refresh_rate = 80
 
     def load_tiles(self, path):
         tiles = {}
@@ -65,6 +70,7 @@ class TileHandler:
         left = self.get(grid, x - 1, y) == material
         right = self.get(grid, x + 1, y) == material
 
+
         # 0   = upper-left
         # 90  = lower-left
         # 180 = lower-right
@@ -92,8 +98,7 @@ class TileHandler:
 
         key = (x, y)
 
-        # --- Only refresh every N frames ---
-        if key not in self.render_cache or self.game.gameTime % self.refresh_rate == 0:
+        if key not in self.render_cache or (self.game.gameTime + x * 5 + y * 5) % self.refresh_rate == 0:
             shape, rotation = self.get_tile_type(grid, x, y)
 
             if shape == "center":
@@ -101,12 +106,12 @@ class TileHandler:
             else:
                 img = random.choice(self.tiles[material]["corner"][rotation])
 
-            print("el primo")
             self.render_cache[key] = img
 
         return self.render_cache[key]
+    
 
-    def draw(self, screen, world_x, world_y, grid, camera):
+    def draw(self, world_x, world_y, grid, camera):
         for y, row in enumerate(grid):
             for x, tile in enumerate(row):
 
@@ -115,13 +120,16 @@ class TileHandler:
 
                 rect = self.get_tile_rect(world_x, world_y, x, y)
 
+
                 offset = rect.topleft - camera + pygame.Vector2(WIDTH/2, HEIGHT/2)
                 screen_pos = (offset.x, offset.y)
 
                 img = self.get_tile_image(grid, x, y)
 
                 if img:
-                    screen.blit(img, screen_pos)
+                    self.game.screen.blit(img, screen_pos)
+
+                draw_debug_rect(self.game.screen, rect, self.game.camera)
 
 
     def get_tile_rect(self, world_x, world_y, x, y):
