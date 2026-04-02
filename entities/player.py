@@ -6,9 +6,8 @@ from entity import Entity
 from storage.gameVars import *
 
 class Player(Entity):
-    def __init__(self, game, healthBar):
-        super().__init__(game, game.playerAnimSet, "Player", 5)
-        self.pos = vec(200, 200)
+    def __init__(self, game, healthBar, pos):
+        super().__init__(game, game.playerAnimSet, "Player", 5, pos)
         self.despawnTime = 300
 
         self.isDashing = False
@@ -16,28 +15,31 @@ class Player(Entity):
         self.dashVector = vec(0, 0)
         self.lastInput = K_UP
 
+        self.desiredVel = vec(0,0)
+        self.vel = vec(0,0)
+
         self.healthBar = healthBar
 
     def posUpdate(self):
-        self.vel = vec(0,0)
+        self.desiredVel = vec(0,0)
 
         if self.isDashing:
-            self.vel = self.dashVector
+            self.desiredVel = self.dashVector
             self.dashVector *= 0.94
         else:
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[K_LEFT]:
                 self.lastInput = K_LEFT
-                self.vel.x = -2
+                self.desiredVel.x = -2
             if pressed_keys[K_RIGHT]:
                 self.lastInput = K_RIGHT
-                self.vel.x = 2
+                self.desiredVel.x = 2
             if pressed_keys[K_UP]:
                 self.lastInput = K_UP
-                self.vel.y = -2
+                self.desiredVel.y = -2
             if pressed_keys[K_DOWN]:
                 self.lastInput = K_DOWN
-                self.vel.y = 2
+                self.desiredVel.y = 2
 
 
     def dash(self):
@@ -86,6 +88,13 @@ class Player(Entity):
         if not self.dead:
             self.posUpdate()
             self.dash()
+
+            # update entity depends on self.vel
+            mult = 1
+            if self.vel.magnitude() > self.desiredVel.magnitude(): mult = 0.2
+            else: mult = 0.8
+            self.vel += (self.desiredVel - self.vel) * mult
+            # print("v", self.vel)
             self.updateEntity()
             self.dashFrames -= 1
         else:

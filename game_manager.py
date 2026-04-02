@@ -3,11 +3,13 @@ import pygame
 import copy
 import random
 
-from room import Room
+from generation.room import Room
 from storage.gameVars import *
 from storage.animSets import *
 from storage.imageUtility import *
-from tileHandler import *
+from generation.tileHandler import *
+from generation.door import *
+from generation.button import *
 
 def build_animset(animSet, scale=4):
     return {
@@ -25,6 +27,7 @@ class Game:
         self.friendly_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
         self.ui_sprites = pygame.sprite.Group()
+        self.interactables = pygame.sprite.Group()
 
         self.healthBar = None
         self.player = None
@@ -36,6 +39,8 @@ class Game:
         self.bossAnimSet = bossAnimSet
         self.healthPackSet = healthPackSet
         self.heartSet = heartSet
+        self.buttonSet = buttonSet
+        self.doorSet = doorSet
 
         self.buildAnimSets()
 
@@ -62,6 +67,16 @@ class Game:
         self.camera_lerp = 0.1  # smoothing strength
         self.camera_max_offset = 120
     
+    def buildAnimSets(self):
+        self.playerAnimSet = build_animset(self.playerAnimSet)
+        self.enemyAnimSet = build_animset(self.enemyAnimSet)
+        self.miniBossAnimSet = build_animset(self.miniBossAnimSet)
+        self.bossAnimSet = build_animset(self.bossAnimSet)
+        self.healthPackSet = build_animset(self.healthPackSet)
+        self.heartSet = build_animset(self.heartSet)
+        self.buttonSet = build_animset(self.buttonSet)
+        self.doorSet = build_animset(self.doorSet)
+
     def get_current_room(self, entity):
         px, py = entity.pos
 
@@ -96,14 +111,6 @@ class Game:
         target = self.get_camera_target()
         self.camera += (target - self.camera) * self.camera_lerp
 
-    def buildAnimSets(self):
-        self.playerAnimSet = build_animset(self.playerAnimSet)
-        self.enemyAnimSet = build_animset(self.enemyAnimSet)
-        self.miniBossAnimSet = build_animset(self.miniBossAnimSet)
-        self.bossAnimSet = build_animset(self.bossAnimSet)
-        self.healthPackSet = build_animset(self.healthPackSet)
-        self.heartSet = build_animset(self.heartSet)
-
     def get_doors(self, x, y):
         h = len(self.world_layout)
         w = len(self.world_layout[0])
@@ -116,8 +123,8 @@ class Game:
         }
     
     def carve_doors(self, grid, doors):
-        DOOR_POS = [7, 8, 9, 10]  # fixed positions
-        DOOR_DEPTH = 2
+        DOOR_POS = [7, 8]  # fixed positions
+        DOOR_DEPTH = 1
         size = 16
 
         # --- TOP ---
@@ -162,7 +169,8 @@ class Game:
     def split_room(self):
         grid = self.empty_room()
 
-        for y in range(16):
+        for y in range(2, 14):
+            grid[y][7] = "blackMetal"
             grid[y][8] = "blackMetal"
 
         return grid
@@ -176,21 +184,85 @@ class Game:
                 grid[y][x] = "blackMetal"
 
         return grid
+    
+    def button_room(self, x, y):
+        room = Room(self, x, y, self.room_width, self.room_height)
 
+        # --- base tiles ---
+        grid = self.empty_room()
+
+        # ONLY top door
+        doors = {"up": True, "down": False, "left": False, "right": False}
+        grid = self.carve_doors(grid, doors)
+
+        room.update_tiles(grid)
+
+        # initialize door states
+        room.doors["up"]["open"] = False
+
+        # --- event ---
+        room.events = [
+            {"type": "button_pressed", "target": "up", "done": False}
+        ]
+
+        return room
+    
     def build_rooms(self):
         for x in range(3):
             for y in range(3):
-                room = Room(x, y, self.room_width, self.room_height)
 
-                # if self.world_layout[y][x] == 0:
-                #     continue
+                # 👉 use your special room for testing
+                if (x, y) == (1, 1):
+                    room = self.button_room(x, y)
+                else:
+                    room = Room(self, x, y, self.room_width, self.room_height)
+                    room.game = self
 
-                # pick a room design
-                grid = random.choice(self.ROOM_TYPES)()
+                    grid = random.choice(self.ROOM_TYPES)()
 
-                # carve doors
-                doors = self.get_doors(x, y)
-                grid = self.carve_doors(grid, doors)
-                room.update_tiles(grid)
+                    doors = self.get_doors(x, y)
+                    grid = self.carve_doors(grid, doors)
+
+                    room.update_tiles(grid)
+
+                # --- spawn entities AFTER tiles exist ---
+                self.spawn_doors(room)
+
+                # only give button to button rooms
+                if room.events:
+                    self.spawn_button(room)
+
+                # IMPORTANT: build door collision AFTER doors exist
+                room.update_door_rects()
 
                 self.rooms[(x, y)] = room
+
+    def spawn_doors(self, room):
+        TILE = 32
+
+        # TOP door (2 tiles)
+        positions = [(7, 0), (8, 0)]
+
+        for tx, ty in positions:
+            world_pos = (
+                room.world_x + tx * TILE + TILE // 2,
+                room.world_y + ty * TILE + TILE // 2
+            )
+
+            door = Door(self, room, world_pos, "up")
+            self.interactables.add(door)
+    
+    def spawn_button(self, room):
+        TILE = 32
+
+        print("spawned bro")
+
+        tx, ty = 8, 8
+
+        world_pos = (
+            room.world_x + tx * TILE + TILE // 2,
+            room.world_y + ty * TILE + TILE // 2
+        )
+
+        button = Button(self, room, world_pos)
+        self.interactables.add(button)

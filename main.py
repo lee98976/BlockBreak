@@ -8,6 +8,7 @@ import math
 from storage.gameVars import *
 from game_manager import Game
 from storage.animatedObject import AnimatedObject
+from storage.debugUtitlity import *
 from entity import Entity
 from entities.player import Player
 from entities.pickups import HealthPack
@@ -17,6 +18,7 @@ from entities.laser import Laser
 from entities.boss import Boss
 from entities.heart import Heart
 from entities.healthbar import HealthBar
+
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -34,31 +36,28 @@ pygame.display.set_caption("Alyss")
 
 game.friendly_sprites = pygame.sprite.Group()
 game.healthBar = HealthBar(game)
-game.player = Player(game, game.healthBar)
+game.player = Player(game, game.healthBar, vec(700, 700))
 game.healthBar.updateHealth(game.player.hp)
 game.friendly_sprites.add(game.player)
 
 game.enemy_sprites = pygame.sprite.Group()
-miniBoss1 = MiniBoss(game, game.player, game.enemy_sprites, 120)
-miniBoss2 = MiniBoss(game, game.player, game.enemy_sprites, 280)
+miniBoss1 = MiniBoss(game, game.player, game.enemy_sprites, vec(120, 120))
+miniBoss2 = MiniBoss(game, game.player, game.enemy_sprites, vec(280, 120))
 game.enemy_sprites.add(miniBoss1)
 game.enemy_sprites.add(miniBoss2)
 
-boss = Boss(game)
+boss = Boss(game, vec(200, 80))
 hasActivated = False
 game.enemy_sprites.add(boss)
 
-def draw_debug_rect(screen, rect, camera):
-    offset = rect.topleft - camera + vec(WIDTH/2, HEIGHT/2)
-    debug_rect = pygame.Rect(offset, rect.size)
-    pygame.draw.rect(screen, (0, 0, 0), debug_rect, 2)
-
 while True:
+    # regular pygame exit check
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
 
+    # obselete boss code
     if miniBoss1.dead and miniBoss2.dead and not hasActivated:
         boss.activate()
         hasActivated = True
@@ -68,6 +67,7 @@ while True:
     if boss.deadCheck():
         boss.takeDamage(9999)
 
+    # player and enemy interaction...
     hits = pygame.sprite.spritecollide(game.player, game.enemy_sprites, False)
 
     for enemy in hits:
@@ -76,13 +76,21 @@ while True:
         elif hasattr(enemy, "isHarmful") and enemy.isHarmful:
             game.player.takeDamage(1, 60)
 
+    # player and friendly interaction
     for sprite in game.friendly_sprites:
         if isinstance(sprite, HealthPack):
             if game.player.rect.colliderect(sprite.rect):
                 if game.player.hp < 5:
                     game.player.takeDamage(-1, 0)
                     sprite.kill()
+    
+    # interaction with interactables
+    hits2 = pygame.sprite.spritecollide(game.player, game.interactables, False)
+    for obj in hits2:
+        if game.player.isDashing:
+            obj.takeDamage(1)
 
+    # rudimentary screen shake
     offset = vec(0, 0)
     if boss.active:
         offset = vec(random.randint(-2, 2), random.randint(-2, 2))
@@ -93,12 +101,17 @@ while True:
     game.friendly_sprites.update()
     game.enemy_sprites.update()
     game.ui_sprites.update()
+    game.interactables.update()
 
+    # TODO: smart loading AND smart enemy rendering
     for room in game.rooms.values():
-        game.tileHandler.draw(room.world_x, room.world_y, room.tiles, game.camera)
+        room.update()
+        game.tileHandler.draw(room, game.camera)
 
     for s in game.ui_sprites:
         screen.blit(s.image, s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
+    for s in game.interactables:
+        screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
     for s in game.friendly_sprites:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
         draw_debug_rect(screen, s.rect, game.camera)

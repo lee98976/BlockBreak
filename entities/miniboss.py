@@ -1,23 +1,24 @@
 import math
+import random
 import pygame
 from entity import Entity
 from entities.reddie import Reddie
 from storage.gameVars import vec
 
 class MiniBoss(Entity):
-    def __init__(self, game, player, enemy_group, x):
-        super().__init__(game, game.miniBossAnimSet, "MiniBoss", 2)
+    def __init__(self, game, player, enemy_group, pos):
+        super().__init__(game, game.miniBossAnimSet, "MiniBoss", 2, pos)
         self.game = game
         self.player = player
         self.enemy_group = enemy_group
-        self.pos = pygame.Vector2(x,120)
         self.waveSize = 10
         self.deleteTimer = 120
         self.spawnWave()
 
     def spawnWave(self):
         for i in range(self.waveSize):
-            e = Reddie(self.game, 1, self.player, "melee", 0.1)
+            pos = vec(random.randint(int(self.pos.x - 20), int(self.pos.x + 20)), random.randint(int(self.pos.y - 20), int(self.pos.y + 20)))
+            e = Reddie(self.game, 1, self.player, "melee", 0.1, pos)
             self.enemy_group.add(e)
 
     def takeDamage(self, dmg):

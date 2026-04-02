@@ -7,10 +7,9 @@ from entities.reddie import Reddie
 from storage.gameVars import vec
 
 class Boss(Entity):
-    def __init__(self, game):
-        super().__init__(game, game.bossAnimSet, "Bossy", 999)
+    def __init__(self, game, pos):
+        super().__init__(game, game.bossAnimSet, "Bossy", 999, pos)
         self.game = game
-        self.pos = pygame.Vector2(200,80)
         self.active = False
         self.angle = 0
         self.switchTimer = 60
@@ -55,7 +54,8 @@ class Boss(Entity):
                 self.kill()
         if self.active:
             if self.spawnTimer <= 0:
-                e = Reddie(self.game, 1, self.game.player, "melee", 0.5)
+                pos = self.pos + vec(random.randint(-50, 50), random.randint(-50, 50))
+                e = Reddie(self.game, 1, self.game.player, "melee", 0.5, pos)
                 self.game.enemy_sprites.add(e)
                 self.spawnTimer = 90
             self.spawnTimer -= 1

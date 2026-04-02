@@ -4,13 +4,8 @@ from pygame.locals import *
 from storage.animatedObject import AnimatedObject
 from storage.gameVars import *
 
-def draw_debug_rect(screen, rect, camera):
-    offset = rect.topleft - camera + vec(WIDTH/2, HEIGHT/2)
-    debug_rect = pygame.Rect(offset, rect.size)
-    pygame.draw.rect(screen, (0, 0, 0), debug_rect, 2)
-
 class Entity(AnimatedObject):
-    def __init__(self, game, animSet, name, hp):
+    def __init__(self, game, animSet, name, hp, pos):
         super().__init__(animSet)
         self.hp = hp
         self.game = game
@@ -18,6 +13,11 @@ class Entity(AnimatedObject):
         self.invFrames = 0
         self.dead = False
         self.vel = vec(0, 0)
+        
+        self.pos = vec(pos)
+        self.rect.center = self.pos
+        self.room = game.get_current_room(self)
+
 
     def takeDamage(self, dmg, iFrames=30):
         if (self.invFrames > 0 and dmg > 0) or self.dead:
@@ -55,7 +55,8 @@ class Entity(AnimatedObject):
         self.rect.center = self.pos
 
     def collide(self, axis):
-        for wall in self.game.get_current_room(self).wall_rects:
+        room = self.game.get_current_room(self)
+        for wall in room.wall_rects + room.door_rects:
             if not self.rect.colliderect(wall):
                 continue
 

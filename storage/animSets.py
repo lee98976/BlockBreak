@@ -102,3 +102,36 @@ heartSet = {
         [(2,15),(3,15),(4,15)], # heal
     ]
 }
+
+doorSet = {
+    "img_paths": [
+        "assets/doors/door_closed.png",
+        "assets/doors/door_open_1.png",
+        "assets/doors/door_open_2.png",
+        "assets/doors/door_open_3.png",
+        "assets/doors/door_open_4.png",
+        "assets/doors/door_open_5.png",
+        "assets/doors/door_open_6.png",
+        "assets/doors/door_open_7.png",
+    ],
+    "anims": [
+        [(0, 9999)],  # closed
+        [(i, 5) for i in range(1, 7)],  # opening animation
+        [(7, 9999)]
+    ]
+}
+
+buttonSet = {
+    "img_paths": [
+        "assets/buttons/button_1.png",
+        "assets/buttons/button_2.png",
+        "assets/buttons/button_3.png",
+        "assets/buttons/button_4.png",
+    ],
+    "anims": {
+        0: [(0, 9999)],  # full HP
+        1: [(1, 9999)],
+        2: [(2, 9999)],
+        3: [(3, 9999)],  # fully pressed
+    }
+}
