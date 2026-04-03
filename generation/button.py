@@ -30,7 +30,8 @@ class Button(Entity):
             direction = self.game.player.vel.normalize()
             
             self.game.player.vel += -direction * 30
-            self.game.player.dashFrames = -1
+            self.game.player.dashFrames = 6
+            self.game.player.isDashing = False
 
             print(self.game.player.vel)
 

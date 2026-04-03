@@ -1,89 +1,120 @@
 import pygame
 from pygame.locals import *
-import sys
 import random
+import math
 
 from entity import Entity
 from entities.pickups import HealthPack
 from storage.gameVars import *
 
 class Reddie(Entity):
-    def __init__(self, game, hp, following, attackType, dropChance, pos):
+    def __init__(self, game, hp, following, dropChance, pos):
         super().__init__(game, game.enemyAnimSet, "Reddie", hp, pos)
-        self.game = game
+
         self.following = following
-        self.attackType = attackType
-        self.attackCooldown = 0
-        self.switchTimer = 120
-        self.deleteTimer = 30
         self.dropChance = dropChance
+
         self.isHarmful = True
 
-        self.behavior = random.choice(["chase","circle","ambush"])
-        self.attackTimer = random.randint(40,320)
+        # --- STATE SYSTEM ---
+        self.state = random.choice(["chase", "circle", "ambush"])
+        self.stateTimer = random.randint(120, 240)
 
-    def posUpdate(self):
-        self.vel = vec(0, 0)
+        # --- COMBAT ---
+        self.stunTimer = 0
 
+        # --- DEATH ---
+        self.deleteTimer = 30
+
+    def updateAI(self):
         if self.following is None:
             return
 
-        dif = self.following.pos - self.pos
-
-        if dif.length() < 0.3:
+        # direction to player
+        diff = self.following.pos - self.pos
+        if diff.length() == 0:
             return
 
-        direction = dif.normalize()
+        direction = diff.normalize()
 
-        if self.behavior == "chase":
-            self.vel += direction * 1.4
-            if self.switchTimer < 0:
-                if random.random() < 0.5:
-                    self.switchTimer = random.randint(120,320)
-                    self.behavior = "circle"
-                else:
-                    self.switchTimer = random.randint(200,400)
-                    self.behavior = "ambush"
-        elif self.behavior == "circle":
+        desired = vec(0, 0)
+
+        if self.state == "chase":
+            desired = direction * 1.5
+        elif self.state == "circle":
             perp = vec(-direction.y, direction.x)
-            self.vel += direction * 1
-            self.vel += perp * 2
-            if self.switchTimer < 0:
-                self.switchTimer = random.randint(100, 150)
-                self.behavior = "chase"
-        elif self.behavior == "ambush":
-            self.vel += direction * 0.3
-            self.attackTimer -= 1
+            desired = direction * 0.8 + perp * 1.8
+        elif self.state == "ambush":
+            # slow tracking
+            desired = direction * 0.4
 
-            if self.attackTimer <= 0:
-                self.vel += direction * 3
-                if self.attackTimer < -40:
-                    self.attackTimer = random.randint(120,320)
-            
-            if self.switchTimer < 0:
-                self.switchTimer = random.randint(400, 450)
-                self.behavior = "chase"
-        
-        self.vel += vec(random.uniform(-0.3,0.3), random.uniform(-0.3,0.3))
+            self.stateTimer -= 1
+            if self.stateTimer <= 40:
+                desired = direction * 4
 
-    def attack(self):
-        if self.attackCooldown <= 0:
-            if self.attackType == "ranged":
-                self.attackCooldown = 50
+        self.vel += (desired - self.vel) * 0.15
+
+        self.vel += vec(random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1))
+
+    def updateState(self):
+        self.stateTimer -= 1
+
+        if self.stateTimer > 0:
+            return
+
+        if self.state == "chase":
+            self.state = random.choice(["circle", "ambush"])
+            self.stateTimer = random.randint(120, 240)
+
+            if self.state == "ambush":
+                self.changeAnim(2)  # transform → ambush
+                self.defaultAnim = 1  # ambush idle
+
+        elif self.state == "circle":
+            self.state = "chase"
+            self.stateTimer = random.randint(100, 160)
+        elif self.state == "ambush":
+            self.state = "chase"
+            self.stateTimer = random.randint(180, 260)
+
+            self.changeAnim(3)
+            self.defaultAnim = 0
+
+    def takeDamage(self, dmg, iFrames=30):
+        super().takeDamage(dmg, iFrames)
+
+        if self.dead:
+            return
+
+        # knockback + stun
+        player = self.game.player
+        direction = (self.pos - player.pos)
+
+        if direction.length() > 0:
+            direction = direction.normalize()
+            self.vel += direction * 8
+
+        self.stunTimer = 40
+
 
     def onDeath(self):
         self.following = None
-        self.dead = True
         self.isHarmful = False
-        self.changeAnim(1)
+        self.changeAnim(4)
 
     def update(self):
         self.renderAnim()
 
         if not self.dead:
-            self.posUpdate()
-            self.attack()
+            if self.stunTimer > 0:
+                self.stunTimer -= 1
+                self.vel *= 0.85  
+            else:
+                self.updateAI()
+                self.updateState()
+
             self.updateEntity()
+
         else:
             self.deleteTimer -= 1
             if self.deleteTimer <= 0:
@@ -91,6 +122,3 @@ class Reddie(Entity):
                     hp = HealthPack(self.game, self.pos)
                     self.game.friendly_sprites.add(hp)
                 self.kill()
-        
-        self.switchTimer -= 1
-        self.attackCooldown -= 1

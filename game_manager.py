@@ -35,12 +35,15 @@ class Game:
         # preload all images to save memory
         self.playerAnimSet = playerAnimSet
         self.enemyAnimSet = enemyAnimSet
+        self.bullieAnimSet = bullieAnimSet
         self.miniBossAnimSet = miniBossAnimSet
         self.bossAnimSet = bossAnimSet
         self.healthPackSet = healthPackSet
         self.heartSet = heartSet
         self.buttonSet = buttonSet
         self.doorSet = doorSet
+        self.dashTrailSet = dashTrailSet
+        self.diagonalDashTrailSet = diagonalDashTrailSet
 
         self.buildAnimSets()
 
@@ -53,7 +56,9 @@ class Game:
             [1,1,1],
             [1,1,1],
         ]
-        self.ROOM_TYPES = [self.empty_room, self.pillar_room, self.split_room, self.arena_room]
+
+        # written by putting functions within list so that they can be recalled again and again in order to recreate deep copies
+        self.ROOM_TYPES = [self.nature_showcase_room]
 
         # room generation!
         self.rooms = {}
@@ -70,12 +75,15 @@ class Game:
     def buildAnimSets(self):
         self.playerAnimSet = build_animset(self.playerAnimSet)
         self.enemyAnimSet = build_animset(self.enemyAnimSet)
+        self.bullieAnimSet = build_animset(self.bullieAnimSet)
         self.miniBossAnimSet = build_animset(self.miniBossAnimSet)
         self.bossAnimSet = build_animset(self.bossAnimSet)
         self.healthPackSet = build_animset(self.healthPackSet)
         self.heartSet = build_animset(self.heartSet)
         self.buttonSet = build_animset(self.buttonSet)
         self.doorSet = build_animset(self.doorSet)
+        self.dashTrailSet = build_animset(self.dashTrailSet)
+        self.diagonalDashTrailSet = build_animset(self.diagonalDashTrailSet)
 
     def get_current_room(self, entity):
         px, py = entity.pos
@@ -153,43 +161,43 @@ class Game:
 
         return grid
     
-    def empty_room(self):
-        return [["blackMetal" if x==0 or y==0 or x==15 or y==15 else "empty"
+    def empty_room(self, material):
+        return [[material if x==0 or y==0 or x==15 or y==15 else "empty"
                 for x in range(16)] for y in range(16)]
     
-    def pillar_room(self):
-        grid = self.empty_room()
+    def pillar_room(self, material):
+        grid = self.empty_room(material)
 
         for y in range(6,10):
             for x in range(6,10):
-                grid[y][x] = "blackMetal"
+                grid[y][x] = material
 
         return grid
     
-    def split_room(self):
-        grid = self.empty_room()
+    def split_room(self, material):
+        grid = self.empty_room(material)
 
         for y in range(2, 14):
-            grid[y][7] = "blackMetal"
-            grid[y][8] = "blackMetal"
+            grid[y][7] = material
+            grid[y][8] = material
 
         return grid
     
-    def arena_room(self):
-        grid = self.empty_room()
+    def arena_room(self, material):
+        grid = self.empty_room(material)
 
         # small center obstacle
         for y in range(7,9):
             for x in range(7,9):
-                grid[y][x] = "blackMetal"
+                grid[y][x] = material
 
         return grid
     
-    def button_room(self, x, y):
+    def button_room(self, material, x, y):
         room = Room(self, x, y, self.room_width, self.room_height)
 
         # --- base tiles ---
-        grid = self.empty_room()
+        grid = self.empty_room(material)
 
         # ONLY top door
         doors = {"up": True, "down": False, "left": False, "right": False}
@@ -202,21 +210,92 @@ class Game:
 
         # --- event ---
         room.events = [
-            {"type": "button_pressed", "target": "up", "done": False}
+            {
+                "trigger": "button",
+                "action": "open_door",
+                "params": {"direction": "up"},
+                "done": False
+            }
         ]
 
         return room
-    
+
+    def nature_showcase_room(self):
+        size = 16
+        grid = self.empty_room("grass")
+
+        # --- WATER POND (organic blob) ---
+        pond = [
+            (5,5),(6,5),(7,5),(8,5),(9,5),
+            (5,6),(6,6),(7,6),(8,6),(9,6),
+            (5,7),(6,7),(7,7),(8,7),(9,7),
+            (6,8),(7,8),(8,8)
+        ]
+
+        for x, y in pond:
+            grid[y][x] = "water"
+
+        # --- HOLES INSIDE WATER ---
+        grid[7][8] = "empty"
+
+        # --- SECOND SMALL POND ---
+        for x, y in [(11,3),(12,3),(11,4)]:
+            grid[y][x] = "water"
+
+        # --- LAVA FLOW (curved path) ---
+        lava_path = [
+            (2,12),(3, 12), (3,11),(4, 11),(4,10),(5,10)
+        ]
+
+        for x, y in lava_path:
+            grid[y][x] = "lava"
+
+
+        return grid
+
+
+    def structure_showcase_room(self):
+        size = 16
+        grid = self.empty_room("blackMetal")
+
+        # --- BLACK STRUCTURE (top-left block) ---
+        for y in range(2,6):
+            for x in range(2,6):
+                grid[y][x] = "blackMetal"
+
+        # --- RUSTED STRUCTURE (top-right L-shape) ---
+        for x in range(10,14):
+            grid[2][x] = "rustedBlack"
+        for y in range(2,7):
+            grid[y][13] = "rustedBlack"
+
+        # --- METAL STRUCTURE (center square with hole) ---
+        for y in range(6,11):
+            for x in range(6,11):
+                grid[y][x] = "blackMetal"
+
+        # hole
+        grid[8][8] = "empty"
+
+        # --- SMALL METAL PILLAR (bottom-left) ---
+        grid[12][3] = "blackMetal"
+        grid[13][3] = "blackMetal"
+
+        # --- RUSTED LINE (bottom horizontal) ---
+        for x in range(7,13):
+            grid[13][x] = "rustedBlack"
+
+        return grid
+        
     def build_rooms(self):
         for x in range(3):
             for y in range(3):
 
                 # 👉 use your special room for testing
                 if (x, y) == (1, 1):
-                    room = self.button_room(x, y)
+                    room = self.button_room("grass", x, y)
                 else:
-                    room = Room(self, x, y, self.room_width, self.room_height)
-                    room.game = self
+                    room = Room(self, x, y, self.room_width, self.room_height)                    
 
                     grid = random.choice(self.ROOM_TYPES)()
 

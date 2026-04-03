@@ -23,21 +23,23 @@ class TileHandler:
             name = file.replace(".png", "")
             parts = name.split("_")
 
-            if "center" in parts:
+            if parts[1] == "center":
                 material = parts[0]
                 shape = "center"
-                variant = int(parts[-1])
                 rotation = None
-            elif "corner" in parts:
+                variant = int(parts[2])
+
+            elif parts[1] in ["corner", "edge", "straight", "end", "isolated"]:
                 material = parts[0]
-                shape = "corner"
-                rotation = int(parts[2])
-                variant = int(parts[3])
-            elif "edge" in parts:
-                material = parts[0]
-                shape = "edge"
-                rotation = int(parts[2])
-                variant = int(parts[3])
+                shape = parts[1]
+
+                if shape == "isolated":
+                    rotation = 0
+                    variant = int(parts[2])
+                else:
+                    rotation = int(parts[2])
+                    variant = int(parts[3])
+
             else:
                 continue
 
@@ -64,37 +66,65 @@ class TileHandler:
         material = grid[y][x]
 
         up = self.get(material, grid, x, y - 1) == material
+        right = self.get(material, grid, x + 1, y) == material
         down = self.get(material, grid, x, y + 1) == material
         left = self.get(material, grid, x - 1, y) == material
-        right = self.get(material, grid, x + 1, y) == material
 
+        # bitmask
+        mask = (up << 0) | (right << 1) | (down << 2) | (left << 3)
 
-        # 0   = upper-left
-        # 90  = lower-left
-        # 180 = lower-right
-        # 270 = upper-right
+        # =====================
+        # ISOLATED
+        if mask == 0:
+            return ("isolated", 0)
 
-            # --- CORNERS (strict) ---
-        if not up and not left:
-            return ("corner", 0)
-        if not left and not down:
-            return ("corner", 90)
-        if not down and not right:
-            return ("corner", 180)
-        if not right and not up:
-            return ("corner", 270)
+        # =====================
+        # END (1 connection)
+        if mask in [1, 2, 4, 8]:
+            rotations = {
+                1: 180,    # up
+                2: 90,   # right
+                4: 0,  # down
+                8: 270   # left
+            }
+            return ("end", rotations[mask])
 
-        # --- EDGES ---
-        if not up:
-            return ("edge", 0)
-        if not left:
-            return ("edge", 90)
-        if not down:
-            return ("edge", 180)
-        if not right:
-            return ("edge", 270)
+        # =====================
+        # STRAIGHT
+        if mask in [1 | 4, 2 | 8]:  # vertical or horizontal
+            if mask == (1 | 4):
+                return ("straight", 0)   # vertical
+            else:
+                return ("straight", 90)  # horizontal
 
-        # --- CENTER ---
+        # =====================
+        # CORNERS (2 adjacent)
+        corner_map = {
+            1 | 2: 90,    # up + right
+            2 | 4: 0,   # right + down
+            4 | 8: 270,  # down + left
+            8 | 1: 180   # left + up
+        }
+        if mask in corner_map:
+            return ("corner", corner_map[mask])
+
+        # =====================
+        # EDGES (3 connections)
+        edge_map = {
+            2 | 4 | 8: 0,    # missing up
+            1 | 4 | 8: 270,   # missing right
+            1 | 2 | 8: 180,  # missing down
+            1 | 2 | 4: 90   # missing left
+        }
+        if mask in edge_map:
+            return ("edge", edge_map[mask])
+
+        # =====================
+        # FULL (center)
+        if mask == 1 | 2 | 4 | 8:
+            return ("center", None)
+
+        # fallback (should never happen)
         return ("center", None)
 
     def get_tile_image(self, room, x, y):
@@ -108,10 +138,20 @@ class TileHandler:
         if key not in room.render_cache or (self.game.gameTime + x * 5 + y * 5) % self.refresh_rate == 0:
             shape, rotation = self.get_tile_type(room.tiles, x, y)
 
+            material_tiles = self.tiles.get(material, {})
+
+            # fallback priority
+            if shape not in material_tiles:
+                shape = "center"
+                rotation = None
+
             if shape == "center":
-                img = random.choice(self.tiles[material]["center"]["variants"])
+                img = random.choice(material_tiles["center"]["variants"])
             else:
-                img = random.choice(self.tiles[material][shape][rotation])
+                if rotation not in material_tiles[shape]:
+                    rotation = list(material_tiles[shape].keys())[0]
+
+                img = random.choice(material_tiles[shape][rotation])
 
             room.render_cache[key] = img
 

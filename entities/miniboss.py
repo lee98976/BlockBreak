@@ -18,7 +18,7 @@ class MiniBoss(Entity):
     def spawnWave(self):
         for i in range(self.waveSize):
             pos = vec(random.randint(int(self.pos.x - 20), int(self.pos.x + 20)), random.randint(int(self.pos.y - 20), int(self.pos.y + 20)))
-            e = Reddie(self.game, 1, self.player, "melee", 0.1, pos)
+            e = Reddie(self.game, 2, self.player, 0.1, pos)
             self.enemy_group.add(e)
 
     def takeDamage(self, dmg):

@@ -114,10 +114,10 @@ while True:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
     for s in game.friendly_sprites:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
-        draw_debug_rect(screen, s.rect, game.camera)
+        # draw_debug_rect(screen, s.rect, game.camera)
     for s in game.enemy_sprites:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
-        draw_debug_rect(screen, s.rect, game.camera)
+        # draw_debug_rect(screen, s.rect, game.camera)
 
 
     # TODO

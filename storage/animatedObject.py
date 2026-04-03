@@ -1,4 +1,5 @@
 import pygame
+import math
 from pygame.locals import *
 
 from storage.gameVars import *
@@ -11,7 +12,8 @@ class AnimatedObject(pygame.sprite.Sprite):
         self.image = self.images[0]
 
         self.rect = self.image.get_bounding_rect()
-        
+
+        self.rotation = animSet.get("rotation", 0)
 
         self.anims = animSet["anims"] # dictionary that describes anim states
         self.defaultAnim = 0
@@ -32,6 +34,7 @@ class AnimatedObject(pygame.sprite.Sprite):
 
         self.frameTimer -= 1
 
+        # calculate the next frame
         if self.frameTimer <= 0:
             self.curImageIndex += 1
 
@@ -44,4 +47,9 @@ class AnimatedObject(pygame.sprite.Sprite):
 
             self.frameTimer = anim[self.curImageIndex][1]
 
-        self.image = self.images[anim[self.curImageIndex][0]]
+        currentFrame = self.images[anim[self.curImageIndex][0]]
+
+        if self.rotation != 0:
+            currentFrame = pygame.transform.rotate(currentFrame, self.rotation)
+
+        self.image = currentFrame

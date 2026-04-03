@@ -55,7 +55,7 @@ class Boss(Entity):
         if self.active:
             if self.spawnTimer <= 0:
                 pos = self.pos + vec(random.randint(-50, 50), random.randint(-50, 50))
-                e = Reddie(self.game, 1, self.game.player, "melee", 0.5, pos)
+                e = Reddie(self.game, 1, self.game.player, 0.5, pos)
                 self.game.enemy_sprites.add(e)
                 self.spawnTimer = 90
             self.spawnTimer -= 1

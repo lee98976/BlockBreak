@@ -4,6 +4,7 @@ import sys
 
 from entity import Entity
 from storage.gameVars import *
+from vfx.dashTrail import *
 
 class Player(Entity):
     def __init__(self, game, healthBar, pos):
@@ -51,29 +52,40 @@ class Player(Entity):
             self.dashVector = vec(0,0)
             dashSpeed = 13
 
+            totalPressed = 0
             if pressed_keys[K_LEFT]:
+                totalPressed += 1
                 self.dashVector.x = -1
             if pressed_keys[K_RIGHT]:
+                totalPressed += 1
                 self.dashVector.x = 1
             if pressed_keys[K_UP]:
+                totalPressed += 1
                 self.dashVector.y = -1
             if pressed_keys[K_DOWN]:
+                totalPressed += 1
                 self.dashVector.y = 1
 
-            if pressed_keys[K_LEFT] or pressed_keys[K_RIGHT] or pressed_keys[K_UP] or pressed_keys[K_DOWN]:
-                self.dashVector = self.dashVector.normalize() * dashSpeed
-                return
-
-            if self.lastInput == K_LEFT:
-                self.dashVector.x = -1
-            if self.lastInput == K_RIGHT:
-                self.dashVector.x = 1
-            if self.lastInput == K_UP:
-                self.dashVector.y = -1
-            if self.lastInput == K_DOWN:
-                self.dashVector.y = 1
+            # if no keys pressed, just go with the last input
+            if not (pressed_keys[K_LEFT] or pressed_keys[K_RIGHT] or pressed_keys[K_UP] or pressed_keys[K_DOWN]):
+                if self.lastInput == K_LEFT:
+                    totalPressed += 1
+                    self.dashVector.x = -1
+                if self.lastInput == K_RIGHT:
+                    totalPressed += 1
+                    self.dashVector.x = 1
+                if self.lastInput == K_UP:
+                    totalPressed += 1
+                    self.dashVector.y = -1
+                if self.lastInput == K_DOWN:
+                    totalPressed += 1
+                    self.dashVector.y = 1
             
+            diagonal = True if totalPressed >= 2 else False
             self.dashVector = self.dashVector.normalize() * dashSpeed
+
+            trail = DashTrail(self.game, self, diagonal=diagonal)
+            self.game.friendly_sprites.add(trail)
 
     def onDeath(self):
         self.changeAnim(2)

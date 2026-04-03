@@ -19,6 +19,11 @@ class Room:
         self.events = []
         self.event_flags = {}
 
+        self.event_handlers = {
+            "open_door": self._event_open_door,
+            "open_all_doors": self._event_open_all_doors,
+        }
+
         self.doors = {
             "up": {"open": True, "entities": []},
             "down": {"open": True, "entities": []},
@@ -33,6 +38,12 @@ class Room:
         # wall rects is what's used for collision calcs
         self.wall_rects = []
         self.render_cache = {}
+
+    def _event_open_door(self, params):
+        self.openDoor(params["direction"])
+
+    def _event_open_all_doors(self, params):
+        self.open_all_doors()
 
     def openDoor(self, direction):
         door_data = self.doors[direction]
@@ -49,8 +60,8 @@ class Room:
 
         self.update_door_rects()
 
-    def trigger_event(self, event_name):
-        self.event_flags[event_name] = True
+    def trigger_event(self, trigger_name):
+        self.event_flags[trigger_name] = True
 
     def update_tiles(self, tiles):
         self.tiles = tiles
@@ -136,17 +147,17 @@ class Room:
             if event["done"]:
                 continue
 
-            if event["type"] == "clear_enemies":
-                room_enemies = [e for e in self.game.enemy_sprites if e.room == self]
+            trigger = event["trigger"]
 
-                if len(room_enemies) == 0:
-                    self.open_all_doors()
-                    event["done"] = True
+            if self.event_flags.get(trigger):
+                action = event["action"]
+                params = event.get("params", {})
 
-            elif event["type"] == "button_pressed":
-                if self.event_flags.get("button"):
-                    self.openDoor(event["target"])
-                    event["done"] = True
+                handler = self.event_handlers.get(action)
+                if handler:
+                    handler(params)
+
+                event["done"] = True
 
                     
     
