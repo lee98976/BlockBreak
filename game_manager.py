@@ -58,7 +58,7 @@ class Game:
         ]
 
         # written by putting functions within list so that they can be recalled again and again in order to recreate deep copies
-        self.ROOM_TYPES = [self.nature_showcase_room]
+        self.ROOM_TYPES = [self.maze_room]
 
         # room generation!
         self.rooms = {}
@@ -70,7 +70,7 @@ class Game:
         # camera!
         self.camera = vec(0, 0)
         self.camera_lerp = 0.1  # smoothing strength
-        self.camera_max_offset = 120
+        self.camera_max_offset = 300 # used to be 120
     
     def buildAnimSets(self):
         self.playerAnimSet = build_animset(self.playerAnimSet)
@@ -113,7 +113,7 @@ class Game:
         offset.x = max(-self.camera_max_offset, min(self.camera_max_offset, offset.x))
         offset.y = max(-self.camera_max_offset, min(self.camera_max_offset, offset.y))
 
-        return center + offset * 0.25
+        return center + offset * 1 # TODO 0.25
     
     def update_camera(self):
         target = self.get_camera_target()
@@ -285,6 +285,13 @@ class Game:
         for x in range(7,13):
             grid[13][x] = "rustedBlack"
 
+        return grid
+    
+    def maze_room(self):
+        grid = self.empty_room("blackMetal")
+        for x in range(2, 14, 2):
+            for y in range(2, 14):
+                grid[y][x] = "blackMetal"
         return grid
         
     def build_rooms(self):

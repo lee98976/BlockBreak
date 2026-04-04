@@ -12,7 +12,7 @@ class MiniBoss(Entity):
         self.game = game
         self.player = player
         self.enemy_group = enemy_group
-        self.waveSize = 10
+        self.waveSize = 1
         self.deleteTimer = 120
         self.spawnWave()
 

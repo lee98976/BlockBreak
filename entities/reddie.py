@@ -16,44 +16,52 @@ class Reddie(Entity):
 
         self.isHarmful = True
 
-        # --- STATE SYSTEM ---
         self.state = random.choice(["chase", "circle", "ambush"])
         self.stateTimer = random.randint(120, 240)
 
-        # --- COMBAT ---
         self.stunTimer = 0
 
-        # --- DEATH ---
         self.deleteTimer = 30
 
     def updateAI(self):
         if self.following is None:
             return
 
-        # direction to player
-        diff = self.following.pos - self.pos
+        # use astar algorithm in order to find the target to move to
+        target, isDirect = self.get_navigation_target(self.following.pos)
+        
+        diff = target - self.pos
         if diff.length() == 0:
             return
-
         direction = diff.normalize()
 
         desired = vec(0, 0)
 
-        if self.state == "chase":
-            desired = direction * 1.5
-        elif self.state == "circle":
-            perp = vec(-direction.y, direction.x)
-            desired = direction * 0.8 + perp * 1.8
-        elif self.state == "ambush":
-            # slow tracking
-            desired = direction * 0.4
+        if isDirect:
+            if self.state == "chase":
+                desired = direction * 1.5
+            elif self.state == "circle":
+                perp = vec(-direction.y, direction.x)
+                desired = direction * 0.8 + perp * 1.8
+            elif self.state == "ambush":
+                # slow tracking
+                desired = direction * 0.4
 
-            self.stateTimer -= 1
-            if self.stateTimer <= 65:
-                desired = direction * 4
+                self.stateTimer -= 1
+                if self.stateTimer <= 65:
+                    desired = direction * 4
+        else:
+            desired = direction * 3
+            if self.state == "ambush":
+                self.changeAnim(3)
+                self.defaultAnim = 0
+
+            self.state = "chase"
+            self.stateTimer = 20
+
+            self.draw_debug_path(self.game.get_current_room(self), self.game.screen, self.game.camera)
 
         self.vel += (desired - self.vel) * 0.15
-
         self.vel += vec(random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1))
 
     def updateState(self):

@@ -166,3 +166,34 @@ class Room:
             self.doors[d]["open"] = True
 
         self.update_door_rects()
+
+    # for pathfinding, finds all exit tiles that are actually empty
+    def get_exit_tiles(self, direction):
+        exits = []
+
+        if direction == "up":
+            y = 0
+            for x in range(16):
+                if self.tiles[y][x] == "empty":
+                    exits.append((x, y))
+
+        elif direction == "down":
+            y = 15
+            for x in range(16):
+                if self.tiles[y][x] == "empty":
+                    exits.append((x, y))
+
+        elif direction == "left":
+            x = 0
+            for y in range(16):
+                if self.tiles[y][x] == "empty":
+                    exits.append((x, y))
+
+        elif direction == "right":
+            x = 15
+            for y in range(16):
+                if self.tiles[y][x] == "empty":
+                    exits.append((x, y))
+
+        return exits
+    
