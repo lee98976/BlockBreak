@@ -4,115 +4,157 @@ import random
 import math
 
 from entity import Entity
-from entities.pickups import HealthPack
 from storage.gameVars import *
+from entities.pickups import HealthPack
+from entities.bullieProjectile import BullieProjectile
 
 class Bullie(Entity):
-    def __init__(self, game, hp, following, dropChance, pos):
-        super().__init__(game, game.enemyAnimSet, "Reddie", hp, pos)
+    def __init__(self, game, pos, target):
+        super().__init__(game, game.bullieAnimSet, "Bullie", 4, pos)
 
-        self.following = following
-        self.dropChance = dropChance
+        self.target = target
+        self.state = "idle"
 
+        self.stateTimer = 0
+        self.attackCooldown = random.randint(60, 120)
+
+        self.ammo = 1  # goes 1 → 4
+        self.maxAmmo = 4
+
+        self.projectileMode = False
         self.isHarmful = True
 
-        # --- STATE SYSTEM ---
-        self.state = random.choice(["chase", "circle", "ambush"])
-        self.stateTimer = random.randint(120, 240)
-
-        # --- COMBAT ---
-        self.stunTimer = 0
-
-        # --- DEATH ---
         self.deleteTimer = 30
 
-    def updateAI(self):
-        if self.following is None:
-            return
+        self.changeAnim(0)
 
-        # direction to player
-        diff = self.following.pos - self.pos
+    # ========================
+    # 🎯 HELPERS
+    # ========================
+    def getDirection(self):
+        diff = self.target.pos - self.pos
         if diff.length() == 0:
-            return
+            return vec(0, 0)
+        return diff.normalize()
 
-        direction = diff.normalize()
-
-        desired = vec(0, 0)
-
-        if self.state == "chase":
-            desired = direction * 1.5
-        elif self.state == "circle":
-            perp = vec(-direction.y, direction.x)
-            desired = direction * 0.8 + perp * 1.8
-        elif self.state == "ambush":
-            # slow tracking
-            desired = direction * 0.4
-
-            self.stateTimer -= 1
-            if self.stateTimer <= 40:
-                desired = direction * 4
-
-        self.vel += (desired - self.vel) * 0.15
-
-        self.vel += vec(random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1))
-
+    # ========================
+    # 🔄 STATE MACHINE
+    # ========================
     def updateState(self):
-        self.stateTimer -= 1
+        if self.state == "idle":
+            self.attackCooldown -= 1
 
-        if self.stateTimer > 0:
+            # slight drift
+            self.vel *= 0.9
+
+            if self.attackCooldown <= 0:
+                self.state = "telegraph"
+                self.stateTimer = 40
+
+        elif self.state == "telegraph":
+            # slow to stop
+            self.vel *= 0.7
+            self.stateTimer -= 1
+
+            if self.stateTimer <= 0:
+                self.state = "shoot"
+
+        elif self.state == "shoot":
+            self.fireProjectile()
+
+            if self.ammo > self.maxAmmo:
+                self.state = "self_launch"
+                self.stateTimer = 20
+            else:
+                self.state = "cooldown"
+                self.stateTimer = 30
+
+        elif self.state == "cooldown":
+            self.vel *= 0.8
+            self.stateTimer -= 1
+
+            if self.stateTimer <= 0:
+                self.state = "telegraph"
+                self.stateTimer = 40
+
+        elif self.state == "self_launch":
+            self.stateTimer -= 1
+            self.vel *= 0.6
+
+            if self.stateTimer <= 0:
+                self.becomeProjectile()
+
+    # ========================
+    # 🔫 SHOOTING
+    # ========================
+    def fireProjectile(self):
+        direction = self.getDirection()
+
+        # animation based on ammo
+        self.changeAnim(1 + self.ammo)
+
+        # spawn projectile (reuse Bullie as projectile or separate class later)
+        proj = BullieProjectile(self.game, self.pos, direction * 4)
+        self.game.enemy_sprites.add(proj)
+
+        self.ammo += 1
+
+    # ========================
+    # 💥 SELF LAUNCH
+    # ========================
+    def becomeProjectile(self):
+        direction = self.getDirection()
+
+        self.projectileMode = True
+        self.vel = direction * 8
+
+        self.changeAnim(1)  # reuse projectile anim
+
+    # ========================
+    # 💥 DAMAGE
+    # ========================
+    def takeDamage(self, dmg, iFrames=30):
+        if self.projectileMode:
             return
 
-        if self.state == "chase":
-            self.state = random.choice(["circle", "ambush"])
-            self.stateTimer = random.randint(120, 240)
-
-        elif self.state == "circle":
-            self.state = "chase"
-            self.stateTimer = random.randint(100, 160)
-
-        elif self.state == "ambush":
-            self.state = "chase"
-            self.stateTimer = random.randint(180, 260)
-
-    def takeDamage(self, dmg, iFrames=30):
         super().takeDamage(dmg, iFrames)
 
         if self.dead:
             return
 
-        # knockback + stun
+        # knockback
         player = self.game.player
         direction = (self.pos - player.pos)
 
         if direction.length() > 0:
-            direction = direction.normalize()
-            self.vel += direction * 8
+            self.vel += direction.normalize() * 6
 
-        self.stunTimer = 40
-
-
+    # ========================
+    # ☠️ DEATH
+    # ========================
     def onDeath(self):
-        self.following = None
         self.isHarmful = False
-        self.changeAnim(1)
+        self.changeAnim(6)
 
+    # ========================
+    # 🔄 UPDATE
+    # ========================
     def update(self):
         self.renderAnim()
 
         if not self.dead:
-            if self.stunTimer > 0:
-                self.stunTimer -= 1
-                self.vel *= 0.85  
-            else:
-                self.updateAI()
+            if not self.projectileMode:
                 self.updateState()
+            else:
+                # projectile mode: just move fast
+                self.vel *= 0.99
 
             self.updateEntity()
 
         else:
             self.deleteTimer -= 1
             if self.deleteTimer <= 0:
-                if random.random() < self.dropChance:
+                if random.random() < 0.3:
                     hp = HealthPack(self.game, self.pos)
                     self.game.friendly_sprites.add(hp)
                 self.kill()

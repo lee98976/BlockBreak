@@ -49,7 +49,7 @@ class Reddie(Entity):
             desired = direction * 0.4
 
             self.stateTimer -= 1
-            if self.stateTimer <= 40:
+            if self.stateTimer <= 65:
                 desired = direction * 4
 
         self.vel += (desired - self.vel) * 0.15
