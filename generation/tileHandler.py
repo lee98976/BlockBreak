@@ -65,6 +65,27 @@ class TileHandler:
     def get_tile_type(self, grid, x, y):
         material = grid[y][x]
 
+        material = grid[y][x]
+
+        # spike special case...
+        if material in ["shortSpike", "tallSpike"]:
+            up = self.is_solid(grid, x, y - 1)
+            right = self.is_solid(grid, x + 1, y)
+            down = self.is_solid(grid, x, y + 1)
+            left = self.is_solid(grid, x - 1, y)
+
+            # spike attaches to the FIRST solid side found
+            if down:
+                return ("edge", 0)     # facing up
+            if left:
+                return ("edge", 90)    # facing right
+            if up:
+                return ("edge", 180)   # facing down
+            if right:
+                return ("edge", 270)   # facing left
+
+            return ("edge", 0)  # fallback
+
         up = self.get(material, grid, x, y - 1) == material
         right = self.get(material, grid, x + 1, y) == material
         down = self.get(material, grid, x, y + 1) == material
@@ -146,14 +167,18 @@ class TileHandler:
                 rotation = None
 
             if shape == "center":
-                img = random.choice(material_tiles["center"]["variants"])
+                try:
+                    img = random.choice(material_tiles["center"]["variants"])
+                except:
+                    # if tile doesn't exist, default to water center
+                    img = self.tiles.get("water", {})["center"]["variants"][0]
             else:
                 if rotation not in material_tiles[shape]:
                     rotation = list(material_tiles[shape].keys())[0]
 
                 img = random.choice(material_tiles[shape][rotation])
 
-            room.render_cache[key] = img
+            room.render_cache[key] = (img, rotation)
 
         return room.render_cache[key]
     
@@ -171,12 +196,12 @@ class TileHandler:
                 offset = rect.topleft - camera + pygame.Vector2(WIDTH/2, HEIGHT/2)
                 screen_pos = (offset.x, offset.y)
 
-                img = self.get_tile_image(room, x, y)
+                img, rotation = self.get_tile_image(room, x, y)
 
                 if img:
                     self.game.screen.blit(img, screen_pos)
 
-                # draw_debug_rect(self.game.screen, rect, self.game.camera)
+                draw_debug_rect(self.game.screen, rect, self.game.camera)
 
 
     def get_tile_rect(self, world_x, world_y, x, y):
@@ -186,3 +211,12 @@ class TileHandler:
             32,
             32
         )
+    
+    def is_solid(self, grid, x, y):
+        if not (0 <= x < 16 and 0 <= y < 16):
+            return True  # treat OOB as solid
+
+        tile = grid[y][x]
+        props = self.game.tile_properties.get(tile, {})
+
+        return props.get("collide", False)

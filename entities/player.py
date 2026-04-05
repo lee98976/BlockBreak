@@ -107,6 +107,8 @@ class Player(Entity):
             else: mult = 0.8
             self.vel += (self.desiredVel - self.vel) * mult
             # print("v", self.vel)
+
+            self.immuneToStatusEffects = self.isDashing
             self.updateEntity()
             self.dashFrames -= 1
         else:

@@ -4,6 +4,7 @@ from storage.gameVars import *
 class Room:
     def __init__(self, game, x, y, width, height):
         self.grid_pos = (x, y)
+        self.game = game
 
         self.width = width
         self.height = height
@@ -25,10 +26,10 @@ class Room:
         }
 
         self.doors = {
-            "up": {"open": True, "entities": []},
-            "down": {"open": True, "entities": []},
-            "left": {"open": True, "entities": []},
-            "right": {"open": True, "entities": []},
+            "up": {"type": "hole", "entities": []},
+            "down": {"type": "hole", "entities": []},
+            "left": {"type": "hole", "entities": []},
+            "right": {"type": "hole", "entities": []},
         }
 
         self.door_rects = []
@@ -48,10 +49,10 @@ class Room:
     def openDoor(self, direction):
         door_data = self.doors[direction]
 
-        if door_data["open"]:
+        if door_data["type"] != "door":
             return
 
-        door_data["open"] = True
+        door_data["type"] = "hole"
 
         for door in door_data["entities"]:
             door.opened = True
@@ -75,12 +76,71 @@ class Room:
             32
         )
     
+    def rotation_to_direction(self, rotation):
+        if rotation == 0:
+            return "up"
+        elif rotation == 90:
+            return "right"
+        elif rotation == 180:
+            return "down"
+        elif rotation == 270:
+            return "left"
+            
     def get_wall_rects(self):
         rects = []
         for y, row in enumerate(self.tiles):
             for x, tile in enumerate(row):
-                if tile != "empty":
-                    rects.append(self.get_tile_rect(x, y))
+                rect = self.get_tile_rect(x, y)
+                tile = self.tiles[y][x]
+                props = self.game.tile_properties.get(tile, {})
+
+                if tile == "shortSpike" or tile == "tallSpike":
+                    depth = props.get("depth", 16)
+                    
+                    # TODO: make tile metadata instead of js hogging off of render_cache
+                    cached = self.render_cache.get((x, y))
+                    if cached:
+                        img, rotation = cached
+                    else:
+                        rotation = 0
+                    direction = self.rotation_to_direction(rotation)
+
+                    if direction == "up":
+                        # anchored to bottom, shrink upward
+                        rect = pygame.Rect(
+                            rect.x,
+                            rect.bottom - depth,
+                            rect.width,
+                            depth
+                        )
+
+                    elif direction == "down":
+                        rect = pygame.Rect(
+                            rect.x,
+                            rect.y,
+                            rect.width,
+                            depth
+                        )
+
+                    elif direction == "left":
+                        rect = pygame.Rect(
+                            rect.right - depth,
+                            rect.y,
+                            depth,
+                            rect.height
+                        )
+
+                    elif direction == "right":
+                        rect = pygame.Rect(
+                            rect.x,
+                            rect.y,
+                            depth,
+                            rect.height
+                        )
+
+                if props.get("collide", False):
+                    rects.append(rect)
+
         return rects
 
     def update_door_rects(self):
@@ -91,8 +151,8 @@ class Room:
         TILE_SIZE = 32
 
         for direction, data in self.doors.items():
-            if data["open"]:
-                continue  # no collision if open
+            if data["type"] != "door":
+                continue
 
             # --- TOP DOOR ---
             if direction == "up":

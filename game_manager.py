@@ -10,6 +10,7 @@ from storage.imageUtility import *
 from generation.tileHandler import *
 from generation.door import *
 from generation.button import *
+from levels.level1 import *
 
 def build_animset(animSet, scale=4):
     return {
@@ -49,6 +50,28 @@ class Game:
 
         # tile sets!
         self.tileHandler = TileHandler(self)
+
+        self.tile_properties = {
+            "empty": {"collide": False},
+
+            "grass": {"collide": True},
+            "water": {"collide": False, "slow": 0.5},
+            "lava": {"collide": False, "damage": 1},
+
+            "shortSpike": {
+                "collide": True,
+                "damage": 1,
+                "depth": 10
+            },
+            "tallSpike": {
+                "collide": True,
+                "damage": 1,
+                "depth": 26
+            },
+
+            "blackMetal": {"collide": True},
+            "rustedBlack": {"collide": True},
+        }
 
         # world generation!
         self.world_layout = [
@@ -113,7 +136,7 @@ class Game:
         offset.x = max(-self.camera_max_offset, min(self.camera_max_offset, offset.x))
         offset.y = max(-self.camera_max_offset, min(self.camera_max_offset, offset.y))
 
-        return center + offset * 1 # TODO 0.25
+        return center + offset * 0.25
     
     def update_camera(self):
         target = self.get_camera_target()
@@ -131,33 +154,38 @@ class Game:
         }
     
     def carve_doors(self, grid, doors):
-        DOOR_POS = [7, 8]  # fixed positions
+        DOOR_POS = [7, 8]
         DOOR_DEPTH = 1
         size = 16
 
-        # --- TOP ---
-        if doors["up"]:
-            for y in range(DOOR_DEPTH):
-                for x in DOOR_POS:
+        def carve(condition, positions):
+            if condition:
+                for x, y in positions:
                     grid[y][x] = "empty"
 
-        # --- BOTTOM ---
-        if doors["down"]:
-            for y in range(size - DOOR_DEPTH, size):
-                for x in DOOR_POS:
-                    grid[y][x] = "empty"
+        # UP
+        carve(
+            doors["up"]["type"] in ["hole", "door"],
+            [(x, y) for y in range(DOOR_DEPTH) for x in DOOR_POS]
+        )
 
-        # --- LEFT ---
-        if doors["left"]:
-            for x in range(DOOR_DEPTH):
-                for y in DOOR_POS:
-                    grid[y][x] = "empty"
+        # DOWN
+        carve(
+            doors["down"]["type"] in ["hole", "door"],
+            [(x, y) for y in range(size - DOOR_DEPTH, size) for x in DOOR_POS]
+        )
 
-        # --- RIGHT ---
-        if doors["right"]:
-            for x in range(size - DOOR_DEPTH, size):
-                for y in DOOR_POS:
-                    grid[y][x] = "empty"
+        # LEFT
+        carve(
+            doors["left"]["type"] in ["hole", "door"],
+            [(x, y) for x in range(DOOR_DEPTH) for y in DOOR_POS]
+        )
+
+        # RIGHT
+        carve(
+            doors["right"]["type"] in ["hole", "door"],
+            [(x, y) for x in range(size - DOOR_DEPTH, size) for y in DOOR_POS]
+        )
 
         return grid
     
@@ -165,60 +193,78 @@ class Game:
         return [[material if x==0 or y==0 or x==15 or y==15 else "empty"
                 for x in range(16)] for y in range(16)]
     
-    def pillar_room(self, material):
+    def open_field_room(self, material):
         grid = self.empty_room(material)
 
-        for y in range(6,10):
-            for x in range(6,10):
+        # random small rocks (use walls)
+        for _ in range(8):
+            x = random.randint(2, 13)
+            y = random.randint(2, 13)
+            grid[y][x] = material
+
+        return grid
+    
+    def pond_room(self):
+        grid = self.empty_room("grass")
+
+        for y in range(5, 10):
+            for x in range(5, 10):
+                grid[y][x] = "water"
+
+        # stepping stone
+        grid[7][7] = "empty"
+
+        return grid
+    
+    def spike_room(self, material):
+        grid = self.empty_room(material)
+
+        for x in range(3, 13):
+            if x % 2 == 0:
+                grid[6][x] = "shortSpike"
+                grid[10][x] = "tallSpike"
+
+        return grid
+    
+    def maze_room_material(self, material):
+        grid = self.empty_room(material)
+
+        for x in range(2, 14, 2):
+            for y in range(2, 14):
                 grid[y][x] = material
 
         return grid
     
-    def split_room(self, material):
-        grid = self.empty_room(material)
+    def lava_entry_room(self):
+        grid = self.empty_room("blackMetal")
+
+        for x in range(4, 12):
+            grid[8][x] = "lava"
+
+        return grid
+    
+    def lava_corridor_room(self):
+        grid = self.empty_room("blackMetal")
 
         for y in range(2, 14):
-            grid[y][7] = material
-            grid[y][8] = material
+            grid[y][7] = "lava"
+            grid[y][8] = "lava"
 
         return grid
     
-    def arena_room(self, material):
-        grid = self.empty_room(material)
+    def lava_arena_room(self):
+        grid = self.empty_room("blackMetal")
 
-        # small center obstacle
-        for y in range(7,9):
-            for x in range(7,9):
-                grid[y][x] = material
+        # lava ring
+        for x in range(4, 12):
+            grid[4][x] = "lava"
+            grid[11][x] = "lava"
+
+        for y in range(4, 12):
+            grid[y][4] = "lava"
+            grid[y][11] = "lava"
 
         return grid
-    
-    def button_room(self, material, x, y):
-        room = Room(self, x, y, self.room_width, self.room_height)
-
-        # --- base tiles ---
-        grid = self.empty_room(material)
-
-        # ONLY top door
-        doors = {"up": True, "down": False, "left": False, "right": False}
-        grid = self.carve_doors(grid, doors)
-
-        room.update_tiles(grid)
-
-        # initialize door states
-        room.doors["up"]["open"] = False
-
-        # --- event ---
-        room.events = [
-            {
-                "trigger": "button",
-                "action": "open_door",
-                "params": {"direction": "up"},
-                "done": False
-            }
-        ]
-
-        return room
 
     def nature_showcase_room(self):
         size = 16
@@ -293,57 +339,109 @@ class Game:
             for y in range(2, 14):
                 grid[y][x] = "blackMetal"
         return grid
-        
+    
+    def attach_button_to_room(self, room):
+        # --- event ---
+        room.events = [
+            {
+                "trigger": "button",
+                "action": "open_door",
+                "params": {"direction": "left"},
+                "done": False
+            }
+        ]
+
+        self.spawn_button(room, 14, 7)
+
+        return room
+
     def build_rooms(self):
-        for x in range(3):
-            for y in range(3):
+        height = len(LEVEL_1_LAYOUT)
+        width = len(LEVEL_1_LAYOUT[0])
 
-                # 👉 use your special room for testing
-                if (x, y) == (1, 1):
-                    room = self.button_room("grass", x, y)
+        self.world_layout = [[1 for _ in range(width)] for _ in range(height)]
+
+        for y in range(height):
+            for x in range(width):
+                room_type = LEVEL_1_ROOMS.get((x, y), "empty")
+
+                room = Room(self, x, y, self.room_width, self.room_height)
+
+                door_config = ROOM_DOORS.get((x, y))
+                if door_config:
+                    for d in ["up", "down", "left", "right"]:
+                        room.doors[d]["type"] = door_config.get(d, "wall")
                 else:
-                    room = Room(self, x, y, self.room_width, self.room_height)                    
+                    auto = self.get_doors(x, y)
+                    for d in auto:
+                        room.doors[d]["type"] = "hole" if auto[d] else "wall"
 
-                    grid = random.choice(self.ROOM_TYPES)()
+                # --- choose generator ---
+                if room_type == "open_field":
+                    grid = self.open_field_room("grass")
 
-                    doors = self.get_doors(x, y)
-                    grid = self.carve_doors(grid, doors)
+                elif room_type == "pond":
+                    grid = self.pond_room()
 
+                elif room_type == "spike_field":
+                    grid = self.spike_room("grass")
+
+                elif room_type == "maze_grass":
+                    grid = self.maze_room_material("grass")
+
+                elif room_type == "button_gate":
+                    grid = self.empty_room("grass")
+                    room = self.attach_button_to_room(room)
+
+                elif room_type == "lava_entry":
+                    grid = self.lava_entry_room()
+
+                elif room_type == "lava_corridor":
+                    grid = self.lava_corridor_room()
+
+                elif room_type == "lava_arena":
+                    grid = self.lava_arena_room()
+
+                else:
+                    grid = self.empty_room("grass")
+
+                # --- apply tiles ---
+                if grid:
+                    grid = self.carve_doors(grid, room.doors)
                     room.update_tiles(grid)
 
-                # --- spawn entities AFTER tiles exist ---
+                # --- entities ---
                 self.spawn_doors(room)
 
-                # only give button to button rooms
-                if room.events:
-                    self.spawn_button(room)
 
-                # IMPORTANT: build door collision AFTER doors exist
                 room.update_door_rects()
-
                 self.rooms[(x, y)] = room
 
     def spawn_doors(self, room):
         TILE = 32
 
-        # TOP door (2 tiles)
-        positions = [(7, 0), (8, 0)]
+        door_positions = {
+            "up": [(7,0),(8,0)],
+            "down": [(7,15),(8,15)],
+            "left": [(0,7),(0,8)],
+            "right": [(15,7),(15,8)],
+        }
 
-        for tx, ty in positions:
-            world_pos = (
-                room.world_x + tx * TILE + TILE // 2,
-                room.world_y + ty * TILE + TILE // 2
-            )
+        for direction, positions in door_positions.items():
+            if room.doors[direction]["type"] != "door":
+                continue
 
-            door = Door(self, room, world_pos, "up")
-            self.interactables.add(door)
+            for tx, ty in positions:
+                world_pos = (
+                    room.world_x + tx * TILE + TILE // 2,
+                    room.world_y + ty * TILE + TILE // 2
+                )
+
+                door = Door(self, room, world_pos, direction)
+                self.interactables.add(door)
     
-    def spawn_button(self, room):
+    def spawn_button(self, room, tx, ty):
         TILE = 32
-
-        print("spawned bro")
-
-        tx, ty = 8, 8
 
         world_pos = (
             room.world_x + tx * TILE + TILE // 2,

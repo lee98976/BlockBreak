@@ -36,7 +36,7 @@ pygame.display.set_caption("Alyss")
 
 game.friendly_sprites = pygame.sprite.Group()
 game.healthBar = HealthBar(game)
-game.player = Player(game, game.healthBar, vec(700, 700))
+game.player = Player(game, game.healthBar, vec(200, 1200))
 game.healthBar.updateHealth(game.player.hp)
 game.friendly_sprites.add(game.player)
 

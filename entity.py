@@ -24,6 +24,7 @@ class Entity(AnimatedObject):
         self.path = []
         self.pathTimer = 0
         self.throughNode = (0, 0)
+        self.immuneToStatusEffects = False
 
 
     def takeDamage(self, dmg, iFrames=30):
@@ -49,6 +50,9 @@ class Entity(AnimatedObject):
         if self.invFrames > 0:
             self.invFrames -= 1
 
+        if not self.immuneToStatusEffects:
+            self.apply_tile_effects()
+
         # X
         self.pos.x += self.vel.x
         self.rect.centerx = self.pos.x
@@ -67,6 +71,16 @@ class Entity(AnimatedObject):
             if not self.rect.colliderect(wall):
                 continue
 
+            # 🔥 NEW: detect spike tiles
+            tile_x = int((wall.x - room.world_x) // 32)
+            tile_y = int((wall.y - room.world_y) // 32)
+
+            tile = room.tiles[tile_y][tile_x]
+            props = self.game.tile_properties.get(tile, {})
+
+            if "damage" in props:
+                self.on_hazard_collision(tile, props)
+
             if axis == "x":
                 if self.vel.x > 0:
                     self.rect.right = wall.left
@@ -81,6 +95,10 @@ class Entity(AnimatedObject):
                     self.rect.top = wall.bottom
 
                 self.pos.y = self.rect.centery
+    
+    def on_hazard_collision(self, tile, props):
+        if hasattr(self, "takeDamage"):
+            self.takeDamage(props.get("damage", 1), 30)
 
     def world_to_grid(self, room, pos):
         local_x = pos.x - room.world_x
@@ -97,7 +115,11 @@ class Entity(AnimatedObject):
     def is_walkable(self, room, x, y):
         if not (0 <= x < 16 and 0 <= y < 16):
             return False
-        return room.tiles[y][x] == "empty"
+
+        tile = room.tiles[y][x]
+        props = self.game.tile_properties.get(tile, {})
+
+        return not props.get("collide", False)
     
     # pretty simple, just checks 12 points along the line from start to end and check if they
     # are occupied (like a raycast...)
@@ -143,7 +165,16 @@ class Entity(AnimatedObject):
                 if not self.is_walkable(room, nx, ny):
                     continue
 
-                new_g = g_score[current] + 1
+                tile = room.tiles[ny][nx]
+                props = self.game.tile_properties.get(tile, {})
+
+                cost = 1
+
+                # heavy water penalty
+                if tile == "water":
+                    cost = 4
+
+                new_g = g_score[current] + cost
 
                 if (nx, ny) not in g_score or new_g < g_score[(nx, ny)]:
                     g_score[(nx, ny)] = new_g
@@ -152,29 +183,6 @@ class Entity(AnimatedObject):
                     came_from[(nx, ny)] = current
 
         return []
-    
-    # def get_direction_to_room(self, current_room, target_room):
-    #     rx, ry = current_room.grid_pos
-    #     px, py = target_room.grid_pos
-
-    #     dx = px - rx
-    #     dy = py - ry
-
-    #     if abs(dx) >= abs(dy):
-    #         return "right" if dx > 0 else "left"
-    #     else:
-    #         return "down" if dy > 0 else "up"
-    
-    # def get_exit_target(self, room, target_room):
-    #     direction = self.get_direction_to_room(room, target_room)
-    #     exits = room.get_exit_tiles(room, direction)
-
-    #     if not exits:
-    #         return self.pos  # fallback
-
-    #     # choose closest exit
-    #     best = min(exits, key=lambda t: (self.grid_to_world(room, *t) - self.pos).length())
-    #     return self.grid_to_world(room, *best)
 
     def get_navigation_target(self, target_pos):
         room = self.game.get_current_room(self)
@@ -332,3 +340,22 @@ class Entity(AnimatedObject):
 
         best = min(exits, key=lambda t: (self.grid_to_world(current_room, *t) - self.pos).length())
         return self.grid_to_world(current_room, *best), direction
+    
+    def apply_tile_effects(self):
+        room = self.game.get_current_room(self)
+
+        gx, gy = self.world_to_grid(room, self.pos)
+
+        if not (0 <= gx < 16 and 0 <= gy < 16):
+            return
+
+        tile = room.tiles[gy][gx]
+        props = self.game.tile_properties.get(tile, {})
+
+        # --- slow (water) ---
+        if "slow" in props:
+            self.vel *= props["slow"]
+
+        # --- damage (lava / spikes) ---
+        if "damage" in props:
+            self.takeDamage(props["damage"], 10)
