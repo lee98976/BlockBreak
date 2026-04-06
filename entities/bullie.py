@@ -28,18 +28,12 @@ class Bullie(Entity):
 
         self.changeAnim(0)
 
-    # ========================
-    # 🎯 HELPERS
-    # ========================
     def getDirection(self):
         diff = self.target.pos - self.pos
         if diff.length() == 0:
             return vec(0, 0)
         return diff.normalize()
 
-    # ========================
-    # 🔄 STATE MACHINE
-    # ========================
     def updateState(self):
         if self.state == "idle":
             self.attackCooldown -= 1
@@ -84,35 +78,30 @@ class Bullie(Entity):
             if self.stateTimer <= 0:
                 self.becomeProjectile()
 
-    # ========================
-    # 🔫 SHOOTING
-    # ========================
     def fireProjectile(self):
         direction = self.getDirection()
 
-        # animation based on ammo
-        self.changeAnim(1 + self.ammo)
+        spread = 0.2
+        direction += vec(random.uniform(-spread, spread), random.uniform(-spread, spread))
+        direction = direction.normalize()
 
         # spawn projectile (reuse Bullie as projectile or separate class later)
         proj = BullieProjectile(self.game, self.pos, direction * 4)
+        proj.changeAnim(1 + self.ammo)
+        proj.defaultAnim = 1 + self.ammo
         self.game.enemy_sprites.add(proj)
 
         self.ammo += 1
 
-    # ========================
-    # 💥 SELF LAUNCH
-    # ========================
     def becomeProjectile(self):
         direction = self.getDirection()
 
         self.projectileMode = True
         self.vel = direction * 8
+        self.dead = True # let it delete itself
 
         self.changeAnim(1)  # reuse projectile anim
 
-    # ========================
-    # 💥 DAMAGE
-    # ========================
     def takeDamage(self, dmg, iFrames=30):
         if self.projectileMode:
             return
@@ -129,17 +118,13 @@ class Bullie(Entity):
         if direction.length() > 0:
             self.vel += direction.normalize() * 6
 
-    # ========================
-    # ☠️ DEATH
-    # ========================
     def onDeath(self):
         self.isHarmful = False
         self.changeAnim(6)
 
-    # ========================
-    # 🔄 UPDATE
-    # ========================
+
     def update(self):
+        if not self.room.discovered: return
         self.renderAnim()
 
         if not self.dead:
@@ -149,7 +134,11 @@ class Bullie(Entity):
                 # projectile mode: just move fast
                 self.vel *= 0.99
 
-            self.updateEntity()
+            if self.projectileMode:
+                self.pos += self.vel
+                self.rect.center = self.pos
+            else:
+                self.updateEntity()
 
         else:
             self.deleteTimer -= 1

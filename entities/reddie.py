@@ -112,7 +112,7 @@ class Reddie(Entity):
 
     def update(self):
         self.renderAnim()
-
+        if not self.room.discovered: return
         if not self.dead:
             if self.stunTimer > 0:
                 self.stunTimer -= 1

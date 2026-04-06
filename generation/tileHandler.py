@@ -77,11 +77,11 @@ class TileHandler:
             # spike attaches to the FIRST solid side found
             if down:
                 return ("edge", 0)     # facing up
-            if left:
+            if right:
                 return ("edge", 90)    # facing right
             if up:
                 return ("edge", 180)   # facing down
-            if right:
+            if left:
                 return ("edge", 270)   # facing left
 
             return ("edge", 0)  # fallback
@@ -199,9 +199,9 @@ class TileHandler:
                 img, rotation = self.get_tile_image(room, x, y)
 
                 if img:
-                    self.game.screen.blit(img, screen_pos)
+                    self.game.screen.blit(img, screen_pos + self.game.screen_shake_offset)
 
-                draw_debug_rect(self.game.screen, rect, self.game.camera)
+                # draw_debug_rect(self.game.screen, rect, self.game.camera)
 
 
     def get_tile_rect(self, world_x, world_y, x, y):
@@ -217,6 +217,7 @@ class TileHandler:
             return True  # treat OOB as solid
 
         tile = grid[y][x]
+        if (tile == "shortSpike" or tile == "tallSpike"): return False
         props = self.game.tile_properties.get(tile, {})
 
         return props.get("collide", False)

@@ -2,23 +2,11 @@
 import pygame
 from pygame.locals import *
 import sys
-import random
-import math
 
 from storage.gameVars import *
 from game_manager import Game
-from storage.animatedObject import AnimatedObject
 from storage.debugUtitlity import *
-from entity import Entity
-from entities.player import Player
 from entities.pickups import HealthPack
-from entities.reddie import Reddie
-from entities.miniboss import MiniBoss
-from entities.laser import Laser
-from entities.boss import Boss
-from entities.heart import Heart
-from entities.healthbar import HealthBar
-
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -28,44 +16,25 @@ pygame.display.set_caption("Alyss")
 
 game = Game(screen)
 
-pygame.init()
-clock = pygame.time.Clock()
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Alyss")
-
-game.friendly_sprites = pygame.sprite.Group()
-game.healthBar = HealthBar(game)
-game.player = Player(game, game.healthBar, vec(200, 1200))
-game.healthBar.updateHealth(game.player.hp)
-game.friendly_sprites.add(game.player)
-
-game.enemy_sprites = pygame.sprite.Group()
-miniBoss1 = MiniBoss(game, game.player, game.enemy_sprites, vec(120, 120))
-miniBoss2 = MiniBoss(game, game.player, game.enemy_sprites, vec(280, 120))
-game.enemy_sprites.add(miniBoss1)
-game.enemy_sprites.add(miniBoss2)
-
-boss = Boss(game, vec(200, 80))
-hasActivated = False
-game.enemy_sprites.add(boss)
-
+temp = False
 while True:
     # regular pygame exit check
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+        
+        game.dialogue.handle_input(event)
 
     # obselete boss code
-    if miniBoss1.dead and miniBoss2.dead and not hasActivated:
-        boss.activate()
-        hasActivated = True
+    if game.miniBoss1.dead and game.miniBoss2.dead and not game.has_boss_activated:
+        game.boss.activate()
+        game.has_boss_activated = True
 
-    boss.checkDashDamage(game.player)
+    game.boss.checkDashDamage(game.player)
 
-    if boss.deadCheck():
-        boss.takeDamage(9999)
+    if game.boss.deadCheck():
+        game.boss.takeDamage(9999)
 
     # player and enemy interaction...
     hits = pygame.sprite.spritecollide(game.player, game.enemy_sprites, False)
@@ -91,9 +60,8 @@ while True:
             obj.takeDamage(1)
 
     # rudimentary screen shake
-    offset = vec(0, 0)
-    if boss.active:
-        offset = vec(random.randint(-2, 2), random.randint(-2, 2))
+    game.update_screen_shake()
+    offset = game.screen_shake_offset
 
     game.update_camera()
     screen.fill((255, 255, 255))
@@ -119,9 +87,20 @@ while True:
         screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
         # draw_debug_rect(screen, s.rect, game.camera)
 
+    # dialogue rendering!
+    game.dialogue.update()
+    game.dialogue.draw()
+
+
+    if (not temp):
+        game.dialogue.start([
+            {"text": "The sign out front is busted...", "speaker": "player"},
+            {"text": "Is this the Mountain trail?", "speaker": "player"}
+        ])
+        temp = True
 
     # TODO
-    boss.drawLasers(screen)
+    game.boss.drawLasers(screen)
     pygame.display.update()
     game.gameTime += 1
     clock.tick(FPS)

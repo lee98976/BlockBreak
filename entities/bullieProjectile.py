@@ -8,8 +8,6 @@ class BullieProjectile(Entity):
         self.life = 120
         self.isHarmful = True
 
-        self.changeAnim(1)  # projectile anim
-
     def update(self):
         self.life -= 1
 
@@ -17,5 +15,8 @@ class BullieProjectile(Entity):
             self.kill()
             return
 
-        self.updateEntity()
+        # 🔥 manual movement (NO collision)
+        self.pos += self.vel
+        self.rect.center = self.pos
+
         self.renderAnim()

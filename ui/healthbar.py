@@ -1,4 +1,4 @@
-from entities.heart import Heart
+from ui.heart import Heart
 
 class HealthBar:
     def __init__(self, game):

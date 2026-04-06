@@ -4,6 +4,7 @@ from pygame.locals import *
 
 from storage.animatedObject import AnimatedObject
 from storage.gameVars import *
+from storage.debugUtitlity import *
 
 TILE_SIZE = 32
 
@@ -53,15 +54,19 @@ class Entity(AnimatedObject):
         if not self.immuneToStatusEffects:
             self.apply_tile_effects()
 
-        # X
-        self.pos.x += self.vel.x
-        self.rect.centerx = self.pos.x
-        self.collide("x")
+        # TODO, add random movement later
+        if self.room.discovered or self.game.player == self:
+            # X
+            self.pos.x += self.vel.x
+            self.rect.centerx = self.pos.x
+            self.collide("x")
 
-        # Y
-        self.pos.y += self.vel.y
-        self.rect.centery = self.pos.y
-        self.collide("y")
+            # Y
+            self.pos.y += self.vel.y
+            self.rect.centery = self.pos.y
+            self.collide("y")
+
+            # print("active", self.name)
 
         self.rect.center = self.pos
 
@@ -71,7 +76,7 @@ class Entity(AnimatedObject):
             if not self.rect.colliderect(wall):
                 continue
 
-            # 🔥 NEW: detect spike tiles
+            # detect spikes
             tile_x = int((wall.x - room.world_x) // 32)
             tile_y = int((wall.y - room.world_y) // 32)
 
@@ -80,6 +85,9 @@ class Entity(AnimatedObject):
 
             if "damage" in props:
                 self.on_hazard_collision(tile, props)
+                draw_debug_rect(self.game.screen, wall, self.game.camera)
+                draw_debug_rect(self.game.screen, self.rect, self.game.camera)
+                
 
             if axis == "x":
                 if self.vel.x > 0:
@@ -356,6 +364,6 @@ class Entity(AnimatedObject):
         if "slow" in props:
             self.vel *= props["slow"]
 
-        # --- damage (lava / spikes) ---
-        if "damage" in props:
+        # --- damage (lava / spikes) --- TODO bandaid fix
+        if "damage" in props and tile != "shortSpike" and tile != "tallSpike":
             self.takeDamage(props["damage"], 10)

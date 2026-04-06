@@ -20,6 +20,7 @@ class Player(Entity):
         self.vel = vec(0,0)
 
         self.healthBar = healthBar
+        self.lastRoom = self.game.get_current_room(self)
 
     def posUpdate(self):
         self.desiredVel = vec(0,0)
@@ -92,14 +93,31 @@ class Player(Entity):
     
     def updateHealthBar(self):
         self.healthBar.updateHealth(self.hp)
+    
+    def checkRoomSwitch(self):
+        room = self.game.get_current_room(self)
+        if room == self.lastRoom: return
+        self.lastRoom = room
+        
+        room.discovered = True
+        print("swap")
+
+        # trigger event system (optional but clean)
+        room.trigger_event("enter")
+
+        # if this is a combat room → lock doors
+        if getattr(room, "kill_all_enemies", False) and not room.completed:
+            for d in room.doors:
+                room.doors[d]["open"] = False
+            room.update_door_rects()
 
     def update(self):
         self.renderAnim()
 
-        self.lastRoom = self.game.get_current_room(self)
         if not self.dead:
             self.posUpdate()
             self.dash()
+            self.checkRoomSwitch()
 
             # update entity depends on self.vel
             mult = 1
@@ -119,21 +137,3 @@ class Player(Entity):
 
         if self.dashFrames <= 0:
             self.isDashing = False
-
-    
-    # def clampPosition(self):
-    #     if not self.lastRoom:
-    #         return
-
-    #     half_w = self.rect.width / 2
-    #     half_h = self.rect.height / 2
-
-    #     self.pos.x = max(
-    #         self.lastRoom.rect.left + half_w,
-    #         min(self.lastRoom.rect.right - half_w, self.pos.x)
-    #     )
-
-    #     self.pos.y = max(
-    #         self.lastRoom.rect.top + half_h,
-    #         min(self.lastRoom.rect.bottom - half_h, self.pos.y)
-    #     )

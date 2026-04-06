@@ -15,6 +15,8 @@ class Room:
         self.rect = pygame.Rect(self.world_x, self.world_y, width, height)
 
         self.completed = False
+        self.discovered = False
+        self.enemies = []
 
         # events
         self.events = []
@@ -80,11 +82,11 @@ class Room:
         if rotation == 0:
             return "up"
         elif rotation == 90:
-            return "right"
+            return "left"
         elif rotation == 180:
             return "down"
         elif rotation == 270:
-            return "left"
+            return "right"
             
     def get_wall_rects(self):
         rects = []
@@ -203,6 +205,16 @@ class Room:
                         self.door_rects.append(rect)
     
     def update(self):
+        # --- check if all enemies are dead ---
+        if self.enemies and self.discovered:
+            # remove dead ones
+            self.enemies = [e for e in self.enemies if not e.dead]
+
+            if len(self.enemies) == 0 and not self.completed:
+                self.completed = True
+                self.trigger_event("all_enemies_dead")
+
+
         for event in self.events:
             if event["done"]:
                 continue

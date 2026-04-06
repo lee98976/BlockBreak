@@ -3,6 +3,13 @@ import pygame
 import copy
 import random
 
+from entities.bullie import Bullie
+from entities.reddie import Reddie
+from entities.player import Player
+from entities.miniboss import MiniBoss
+from entities.boss import Boss
+from ui.dialogueManager import DialogueManager
+from ui.healthbar import HealthBar
 from generation.room import Room
 from storage.gameVars import *
 from storage.animSets import *
@@ -23,6 +30,7 @@ class Game:
         self.gameTime = 0
 
         self.screen = screen
+        self.currentLevel = 1
 
         # manage entities
         self.friendly_sprites = pygame.sprite.Group()
@@ -32,6 +40,13 @@ class Game:
 
         self.healthBar = None
         self.player = None
+        self.boss = None
+        self.miniBoss1 = None
+        self.miniBoss2 = None
+        self.has_boss_activated = False
+
+        # screen shake
+        self.screen_shake_offset = vec(0, 0)
 
         # preload all images to save memory
         self.playerAnimSet = playerAnimSet
@@ -47,6 +62,9 @@ class Game:
         self.diagonalDashTrailSet = diagonalDashTrailSet
 
         self.buildAnimSets()
+
+        # dialogue!
+        self.dialogue = DialogueManager(self)
 
         # tile sets!
         self.tileHandler = TileHandler(self)
@@ -89,6 +107,9 @@ class Game:
         self.room_height = HEIGHT
 
         self.build_rooms()
+        self.initialize_entities()
+
+        self.attach_enemies_to_room(self.rooms[(0, 1)], self.generate_enemies_for_room(self.rooms[(0, 1)]))
 
         # camera!
         self.camera = vec(0, 0)
@@ -141,6 +162,30 @@ class Game:
     def update_camera(self):
         target = self.get_camera_target()
         self.camera += (target - self.camera) * self.camera_lerp
+
+    def update_screen_shake(self):
+        if not self.boss or not self.boss.active:
+            self.screen_shake_offset = vec(0, 0)
+        else:
+            self.screen_shake_offset = vec(random.randint(-2, 2), random.randint(-2, 2))
+
+    def initialize_entities(self):
+        self.healthBar = HealthBar(self)
+        self.player = Player(self, self.healthBar, vec(200, 1200))
+        self.friendly_sprites.add(self.player)
+        self.healthBar.updateHealth(self.player.hp)
+
+        self.miniBoss1 = MiniBoss(self, self.player, self.enemy_sprites, vec(120, 120))
+        self.miniBoss2 = MiniBoss(self, self.player, self.enemy_sprites, vec(280, 120))
+        self.enemy_sprites.add(self.miniBoss1)
+        self.enemy_sprites.add(self.miniBoss2)
+
+        self.boss = Boss(self, vec(200, 80))
+        self.enemy_sprites.add(self.boss)
+
+        start_room = self.get_current_room(self.player)
+        if start_room:
+            start_room.discovered = True
 
     def get_doors(self, x, y):
         h = len(self.world_layout)
@@ -196,33 +241,82 @@ class Game:
     def open_field_room(self, material):
         grid = self.empty_room(material)
 
-        # random small rocks (use walls)
-        for _ in range(8):
-            x = random.randint(2, 13)
-            y = random.randint(2, 13)
-            grid[y][x] = material
+        for y in range(4, 8):
+            for x in range(2, 6):
+                grid[y][x] = "water"
+        
+        for y in range(5, 7):
+            for x in range(3, 5):
+                grid[y][x] = "grass"
+
+        for y in range(8, 12):
+            for x in range(6, 12):
+                grid[y][x] = "water"
+
+        for y in range(9, 11):
+            for x in range(8, 11):
+                grid[y][x] = "grass" 
+        
+        grid[9][7] = "grass"
+
+        grassCoords = [(14, 14), (13, 14), (14, 13), (14, 1), (13, 1), (14, 2), (1, 1), (2, 1), (1, 2), (1, 14), (2, 14), (1, 13)]
+        for x, y in grassCoords:
+            grid[y][x] = "grass"
+
 
         return grid
     
     def pond_room(self):
         grid = self.empty_room("grass")
 
-        for y in range(5, 10):
-            for x in range(5, 10):
+        for y in range(1, 15):
+            for x in range(1, 15):
                 grid[y][x] = "water"
 
         # stepping stone
         grid[7][7] = "empty"
+        grid[7][8] = "empty"
+        grid[8][7] = "empty"
+
+        grid[4][4] = "empty"
+        grid[4][3] = "empty"
+        grid[3][4] = "empty"
+
+        grid[12][8] = "empty"
 
         return grid
     
     def spike_room(self, material):
         grid = self.empty_room(material)
 
-        for x in range(3, 13):
-            if x % 2 == 0:
-                grid[6][x] = "shortSpike"
-                grid[10][x] = "tallSpike"
+        for x in range(2, 14):
+            grid[1][x] = "shortSpike"
+            grid[14][x] = "shortSpike"
+            grid[x][1] = "shortSpike"
+            grid[x][14] = "shortSpike"
+        
+        grid[14][7] = "empty"
+        grid[14][8] = "empty"
+        grid[7][1] = "empty"
+        grid[8][1] = "empty"
+
+        def genSpikedBlock(x, y):
+            for y1 in range(y-1, y+3):
+                for x1 in range(x-1, x+3):
+                    grid[y1][x1] = "tallSpike"
+
+            for y1 in range(y, y+2):
+                for x1 in range(x, x+2):
+                    grid[y1][x1] = "blackMetal"
+            
+            grid[y-1][x-1] = "empty"
+            grid[y-1][x+2] = "empty"
+            grid[y+2][x-1] = "empty"
+            grid[y+2][x+2] = "empty"
+        
+        genSpikedBlock(6, 3)
+        genSpikedBlock(3, 10)
+        genSpikedBlock(7, 9)
 
         return grid
     
@@ -354,6 +448,53 @@ class Game:
         self.spawn_button(room, 14, 7)
 
         return room
+    
+    def generate_enemies_for_room(self, room, num_reddies=2, num_bullies=1):
+        enemies = []
+
+        def random_pos():
+            while True:
+                x = random.randint(0, 15)
+                y = random.randint(0, 15)
+
+                if room.tiles[y][x] == "empty":
+                    return vec(
+                        room.world_x + x * 32 + 16,
+                        room.world_y + y * 32 + 16
+                    )
+
+        # --- spawn reddies ---
+        for _ in range(num_reddies):
+            pos = random_pos()
+            r = Reddie(self, 3, self.player, 0.3, pos)
+            enemies.append(r)
+
+        # --- spawn bullies ---
+        for _ in range(num_bullies):
+            pos = random_pos()
+            b = Bullie(self, pos, self.player)  # adjust args if needed
+            enemies.append(b)
+
+        return enemies
+
+    def attach_enemies_to_room(self, room, enemies):
+        room.events = [
+            {
+                "trigger": "all_enemies_dead",
+                "action": "open_door",
+                "params": {"direction": "up"},
+                "done": False
+            }
+        ]
+
+        # spawn enemies
+        for i in enemies:
+            self.enemy_sprites.add(i)
+            room.enemies.append(i)
+        
+            print(i.pos, i.hp)
+
+        return room
 
     def build_rooms(self):
         height = len(LEVEL_1_LAYOUT)
@@ -416,6 +557,7 @@ class Game:
 
                 room.update_door_rects()
                 self.rooms[(x, y)] = room
+
 
     def spawn_doors(self, room):
         TILE = 32
