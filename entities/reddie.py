@@ -59,7 +59,7 @@ class Reddie(Entity):
             self.state = "chase"
             self.stateTimer = 20
 
-            self.draw_debug_path(self.game.get_current_room(self), self.game.screen, self.game.camera)
+            # self.draw_debug_path(self.game.get_current_room(self), self.game.screen, self.game.camera)
 
         self.vel += (desired - self.vel) * 0.15
         self.vel += vec(random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1))
@@ -111,8 +111,8 @@ class Reddie(Entity):
         self.changeAnim(4)
 
     def update(self):
+        if not self.room.discovered or self.game.dialogue.active: return
         self.renderAnim()
-        if not self.room.discovered: return
         if not self.dead:
             if self.stunTimer > 0:
                 self.stunTimer -= 1

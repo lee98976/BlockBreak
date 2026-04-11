@@ -203,3 +203,40 @@ bossAnimSet = {
         [(i,6) for i in range(8,18)] + [(18, 9999)]
     ]
 }
+
+dialogueAnimSet = {
+    "img_paths": [
+        # --- PLAYER ---
+        "assets/portraits/player1.png",
+        "assets/portraits/player2.png",
+
+        # --- BULLIE ---
+        *[f"assets/portraits/bullie{i}.png" for i in range(1,13)],
+
+        # --- REDDIE ---
+        "assets/portraits/reddies1.png",
+        "assets/portraits/reddies2.png",
+
+        # --- BOSS (TEMP PLACEHOLDER) ---
+        "assets/portraits/reddies1.png",
+
+        "assets/transparent.png"
+    ],
+
+    "anims": [
+        # 0: PLAYER (idle talking)
+        [(0,15),(1,15)],
+
+        # 1: BULLIE (expressive)
+        [(i,5) for i in range(2,14)],
+
+        # 2: REDDIE (simple loop)
+        [(14,12),(15,12)],
+
+        # 3: BOSS (placeholder)
+        [(16,20)],
+
+        # 4: GAME
+        [(17, 99999)]
+    ]
+}

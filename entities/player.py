@@ -21,6 +21,7 @@ class Player(Entity):
 
         self.healthBar = healthBar
         self.lastRoom = self.game.get_current_room(self)
+        self.lastRoom.trigger_event("enter")
 
     def posUpdate(self):
         self.desiredVel = vec(0,0)
@@ -100,12 +101,11 @@ class Player(Entity):
         self.lastRoom = room
         
         room.discovered = True
-        print("swap")
 
         # trigger event system (optional but clean)
         room.trigger_event("enter")
 
-        # if this is a combat room → lock doors
+        # if this is a combat room → lock doors TODO
         if getattr(room, "kill_all_enemies", False) and not room.completed:
             for d in room.doors:
                 room.doors[d]["open"] = False

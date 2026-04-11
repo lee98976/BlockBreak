@@ -25,6 +25,7 @@ class Room:
         self.event_handlers = {
             "open_door": self._event_open_door,
             "open_all_doors": self._event_open_all_doors,
+            "dialogue": self._event_dialogue,
         }
 
         self.doors = {
@@ -47,6 +48,11 @@ class Room:
 
     def _event_open_all_doors(self, params):
         self.open_all_doors()
+    
+    def _event_dialogue(self, params):
+        dialogue = params.get("dialogue", [])
+        if dialogue:
+            self.game.dialogue.start(dialogue)
 
     def openDoor(self, direction):
         door_data = self.doors[direction]
@@ -235,9 +241,7 @@ class Room:
     
     def open_all_doors(self):
         for d in self.doors:
-            self.doors[d]["open"] = True
-
-        self.update_door_rects()
+            self.openDoor(d)
 
     # for pathfinding, finds all exit tiles that are actually empty
     def get_exit_tiles(self, direction):

@@ -62,7 +62,7 @@ ROOM_DOORS = {
         "up": "wall",
         "down": "wall",
         "left": "hole",
-        "right": "door",
+        "right": "hole",
     },
 
     # -------------------------
@@ -93,7 +93,7 @@ ROOM_DOORS = {
     # -------------------------
     (1,1): {
         "up": "wall",
-        "down": "hole",
+        "down": "door",
         "left": "wall",
         "right": "hole",
     },

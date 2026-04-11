@@ -124,7 +124,7 @@ class Bullie(Entity):
 
 
     def update(self):
-        if not self.room.discovered: return
+        if not self.room.discovered or self.game.dialogue.active: return
         self.renderAnim()
 
         if not self.dead:

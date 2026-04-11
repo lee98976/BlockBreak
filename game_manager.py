@@ -60,6 +60,7 @@ class Game:
         self.doorSet = doorSet
         self.dashTrailSet = dashTrailSet
         self.diagonalDashTrailSet = diagonalDashTrailSet
+        self.dialogueAnimSet = dialogueAnimSet
 
         self.buildAnimSets()
 
@@ -109,7 +110,90 @@ class Game:
         self.build_rooms()
         self.initialize_entities()
 
-        self.attach_enemies_to_room(self.rooms[(0, 1)], self.generate_enemies_for_room(self.rooms[(0, 1)]))
+        # TODO FIX HARDCODING, let level handle this later
+        self.attach_dialogue_to_room(self.rooms[(0, 2)], [
+            {"text": "Hmph..", "speaker": "player"},
+            {"text": "Of course that stupid boss ran away to this annoying little hideout.", "speaker": "player"},
+            {"text": "If he also brought his reddies over there, I'm so not ready.", "speaker" : "player"},
+            {"text": "Use arrow keys to move.", "speaker": "game"},
+        ])
+        self.attach_dialogue_to_room(self.rooms[(0, 1)], [
+            {"text": "Of course.", "speaker": "player"},
+            {"text": "Hey! What are you doi--", "speaker": "reddie"},
+            {"text": "Shut up you idiots. Actually, I'll make you.", "speaker" : "player"},
+            {"text": "Press [X] to dash into enemies.", "speaker": "game"},
+        ])
+        self.attach_dialogue_to_room(self.rooms[(0, 0)], [
+            {"text": "These ranged units are a bit annoying.", "speaker": "player"},
+            {"text": "Maybe address me by my name: Bullie!", "speaker": "bullie"},
+            {"text": "Cause I shoot bullets, get it?", "speaker" : "bullie"},
+            {"text": "No.", "speaker": "player"},
+        ])
+        self.attach_dialogue_to_room(self.rooms[(2, 0)], [
+            {"text": "Spikes too? Bro might be a little scared of me...", "speaker": "player"},
+        ])
+        self.attach_dialogue_to_room(self.rooms[(2, 1)], [
+            {"text": "Did he seriously put the button to his castle on his front door?", "speaker": "player"},
+            {"text": "I'm not blind.", "speaker": "player"},
+        ])
+        self.attach_dialogue_to_room(self.rooms[(1, 1)], [
+            {"text": "...", "speaker": "player"}
+        ])
+        self.attach_dialogue_to_room(self.rooms[(2, 2)], [
+            {"speaker": "player", "text": "Wait... this is the place."},
+            {"speaker": "player", "text": "He was supposed to be here."},
+
+            {"speaker": "reddie", "text": "Uh... about that."},
+            {"speaker": "reddie", "text": "He kinda... left."},
+
+            {"speaker": "player", "text": "...He WHAT?"},
+
+            {"speaker": "bullie", "text": "Yeah, he said something about..."},
+            {"speaker": "bullie", "text": "'not being ready for this build'."},
+
+            {"speaker": "player", "text": "...You're kidding."},
+
+            {"speaker": "reddie", "text": "Nope. He ran that way."},
+
+            {"speaker": "player", "text": "Great. Of course he ran through the metal walls."},
+            {"speaker": "player", "text": "Welp. I guess I gotta wait until the beta build comes out in April 12..."},
+            
+            {"text": "Hey.", "speaker": "game"},
+            {"text": "Thanks for watching.", "speaker": "game"},
+
+            {"text": "This project started out as merely an game for AP CSP.", "speaker": "game"},
+            {"text": "However, I noticed the potential in this game, and sought out to develop it.", "speaker": "game"},
+
+            {"text": "From the ground up in Pygame, I developed every single system.", "speaker": "game"},
+            {"text": "From things like animations, rendering, room events, dialogue, enemies, game mechanics,", "speaker": "game"},
+            {"text": "I have essentially created an entire game engine.", "speaker": "game"},
+
+            {"text": "Even something as simple as enemy movement required hundreds of lines to create.", "speaker": "game"},
+            {"text": "I utilized the well known algorithm A* to calculate pretty decent paths between two locations.", "speaker": "game"},
+
+            {"text": "Rooms track their own state, events, and progression.", "speaker": "game"},
+            {"text": "That’s how things like buttons and doors are able to work together.", "speaker": "game"},
+
+            {"text": "I also built the tile system from the ground up.", "speaker": "game"},
+            {"text": "I had to figure out how to tile, and what kind of tiles to use.", "speaker": "game"},
+            {"text": "They are all handdrawn, by the way.", "speaker": "game"},
+            {"text": "Note: Currently, I have five types of tiles", "speaker": "game"},
+            {"text": "But real games have so much more. It's going to be a long time before becoming a true 2D developer...", "speaker": "game"},
+
+            {"text": "Overall, a lot of this was challenging, and many bugs arose.", "speaker": "game"},
+            {"text": "But, the fun of the game is what made me strive to continue development.", "speaker": "game"},
+
+            {"text": "If there’s one thing I’m proud of,", "speaker": "game"},
+            {"text": "it’s that this is one of the first games I've developed", "speaker": "game"},
+            {"text": "to be robust and allow further additions easily.", "speaker": "game"},
+
+            {"text": "Thanks. Jacob Lee", "speaker": "game"},
+        ])
+        
+        self.attach_enemies_to_room(self.rooms[(0, 1)], self.generate_enemies_for_room(self.rooms[(0, 1)], 5, 0))
+        self.attach_enemies_to_room(self.rooms[(0, 0)], self.generate_enemies_for_room(self.rooms[(0, 0)], 2, 3))
+        self.attach_enemies_to_room(self.rooms[(1, 0)], self.generate_enemies_for_room(self.rooms[(1, 0)], 3, 1))
+        self.attach_enemies_to_room(self.rooms[(1, 1)], self.generate_enemies_for_room(self.rooms[(1, 1)], 0, 15))
 
         # camera!
         self.camera = vec(0, 0)
@@ -128,6 +212,7 @@ class Game:
         self.doorSet = build_animset(self.doorSet)
         self.dashTrailSet = build_animset(self.dashTrailSet)
         self.diagonalDashTrailSet = build_animset(self.diagonalDashTrailSet)
+        self.dialogueAnimSet = build_animset(self.dialogueAnimSet)
 
     def get_current_room(self, entity):
         px, py = entity.pos
@@ -171,17 +256,17 @@ class Game:
 
     def initialize_entities(self):
         self.healthBar = HealthBar(self)
-        self.player = Player(self, self.healthBar, vec(200, 1200))
+        self.player = Player(self, self.healthBar, vec(240, 1450))
         self.friendly_sprites.add(self.player)
         self.healthBar.updateHealth(self.player.hp)
 
-        self.miniBoss1 = MiniBoss(self, self.player, self.enemy_sprites, vec(120, 120))
-        self.miniBoss2 = MiniBoss(self, self.player, self.enemy_sprites, vec(280, 120))
-        self.enemy_sprites.add(self.miniBoss1)
-        self.enemy_sprites.add(self.miniBoss2)
+        # self.miniBoss1 = MiniBoss(self, self.player, self.enemy_sprites, vec(120, 120))
+        # self.miniBoss2 = MiniBoss(self, self.player, self.enemy_sprites, vec(280, 120))
+        # self.enemy_sprites.add(self.miniBoss1)
+        # self.enemy_sprites.add(self.miniBoss2)
 
-        self.boss = Boss(self, vec(200, 80))
-        self.enemy_sprites.add(self.boss)
+        # self.boss = Boss(self, vec(200, 80))
+        # self.enemy_sprites.add(self.boss)
 
         start_room = self.get_current_room(self.player)
         if start_room:
@@ -436,16 +521,30 @@ class Game:
     
     def attach_button_to_room(self, room):
         # --- event ---
-        room.events = [
+        room.events.append(
             {
                 "trigger": "button",
                 "action": "open_door",
                 "params": {"direction": "left"},
                 "done": False
             }
-        ]
+        )
 
         self.spawn_button(room, 14, 7)
+
+        return room
+    
+    def attach_dialogue_to_room(self, room, dialogue):
+        room.events.append(
+            {
+                "trigger": "enter",
+                "action": "dialogue",
+                "params": {
+                    "dialogue": dialogue
+                },
+                "done": False
+            }
+        )
 
         return room
     
@@ -478,14 +577,13 @@ class Game:
         return enemies
 
     def attach_enemies_to_room(self, room, enemies):
-        room.events = [
+        room.events.append(
             {
                 "trigger": "all_enemies_dead",
-                "action": "open_door",
-                "params": {"direction": "up"},
+                "action": "open_all_doors",
                 "done": False
             }
-        ]
+        )
 
         # spawn enemies
         for i in enemies:

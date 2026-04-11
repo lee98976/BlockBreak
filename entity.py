@@ -55,7 +55,7 @@ class Entity(AnimatedObject):
             self.apply_tile_effects()
 
         # TODO, add random movement later
-        if self.room.discovered or self.game.player == self:
+        if (self.room.discovered or self.game.player == self) and not self.game.dialogue.active:
             # X
             self.pos.x += self.vel.x
             self.rect.centerx = self.pos.x

@@ -14,8 +14,7 @@ class DialogueManager:
         self.current_text = ""
 
 
-        self.portrait = AnimatedObject(self.game.playerAnimSet)
-        self.game.ui_sprites.add(self.portrait)
+        self.portrait = AnimatedObject(self.game.dialogueAnimSet)
 
         # cache font (IMPORTANT)
         self.font = pygame.font.Font("assets/PressStart2P-Regular.ttf", 8)
@@ -24,14 +23,16 @@ class DialogueManager:
             "player": 0,
             "bullie": 1,
             "reddie": 2,
-            "boss": 3
+            "boss": 3,
+            "game": 4,
         }
 
         self.speaker_side = {
             "player": "left",
             "bullie": "right",
             "reddie": "right",
-            "boss": "right"
+            "boss": "right",
+            "game": "right"
         }
     
     def start(self, dialogue):
@@ -51,10 +52,11 @@ class DialogueManager:
             return
 
         entry = self.dialogue[self.index]
-        speaker = entry.get("speaker", "player")
+        speaker = entry.get("speaker", "reddie")
 
         anim = self.speaker_to_anim.get(speaker, 0)
         self.portrait.changeAnim(anim)
+        self.portrait.defaultAnim = anim
 
     def update(self):
         if not self.active:
@@ -133,22 +135,32 @@ class DialogueManager:
         speaker = entry.get("speaker", "player")
         side = self.speaker_side.get(speaker, "left")
 
-        if side == "left":
-            x = rect.x
-        else:
-            x = rect.right + 20
+        PORTRAIT_PADDING = 20
 
-        y = rect.y - 20
+        self.portrait.renderAnim()
+        img = self.portrait.image
+
+        if side == "left":
+            x = rect.x + PORTRAIT_PADDING
+            change = 100
+        else:
+            x = rect.right - img.get_width() - PORTRAIT_PADDING
+            change = 20
+
+        y = rect.y + 20
         self.portrait.renderAnim()
         self.portrait.rect.topleft = (x, y)
 
         img = self.portrait.image
         if side == "right":
             img = pygame.transform.flip(img, True, False)
+        
+        screen.blit(img, self.portrait.rect)
 
         # --- text ---
         lines = self.wrap_text(self.current_text, self.font, rect.width - 120)
 
         for i, line in enumerate(lines):
             text_surf = self.font.render(line, True, (255, 255, 255))
-            screen.blit(text_surf, (rect.x + 100, rect.y + 20 + i * 24))
+            
+            screen.blit(text_surf, (rect.x + change, rect.y + 20 + i * 24))

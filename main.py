@@ -16,7 +16,6 @@ pygame.display.set_caption("Alyss")
 
 game = Game(screen)
 
-temp = False
 while True:
     # regular pygame exit check
     for event in pygame.event.get():
@@ -27,14 +26,14 @@ while True:
         game.dialogue.handle_input(event)
 
     # obselete boss code
-    if game.miniBoss1.dead and game.miniBoss2.dead and not game.has_boss_activated:
-        game.boss.activate()
-        game.has_boss_activated = True
+    # if game.miniBoss1.dead and game.miniBoss2.dead and not game.has_boss_activated:
+    #     game.boss.activate()
+    #     game.has_boss_activated = True
 
-    game.boss.checkDashDamage(game.player)
+    # game.boss.checkDashDamage(game.player)
 
-    if game.boss.deadCheck():
-        game.boss.takeDamage(9999)
+    # if game.boss.deadCheck():
+    #     game.boss.takeDamage(9999)
 
     # player and enemy interaction...
     hits = pygame.sprite.spritecollide(game.player, game.enemy_sprites, False)
@@ -91,16 +90,8 @@ while True:
     game.dialogue.update()
     game.dialogue.draw()
 
-
-    if (not temp):
-        game.dialogue.start([
-            {"text": "The sign out front is busted...", "speaker": "player"},
-            {"text": "Is this the Mountain trail?", "speaker": "player"}
-        ])
-        temp = True
-
     # TODO
-    game.boss.drawLasers(screen)
+    # game.boss.drawLasers(screen)
     pygame.display.update()
     game.gameTime += 1
     clock.tick(FPS)
