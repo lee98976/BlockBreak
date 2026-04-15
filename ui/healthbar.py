@@ -2,7 +2,7 @@ from ui.heart import Heart
 
 class HealthBar:
     def __init__(self, game):
-        self.hearts = [Heart(game.heartSet, (i * 40 + 40, 460)) for i in range(5)]
+        self.hearts = [Heart(game.heartSet, (i * 10 + 10, 115)) for i in range(5)]
         for i in self.hearts:
             game.ui_sprites.add(i)
     

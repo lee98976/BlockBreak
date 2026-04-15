@@ -1,5 +1,7 @@
 import pygame
 
+from storage.gameVars import DESIGN_FPS, FPS
+
 class Laser:
     def __init__(self, angle):
         self.angle = angle
@@ -16,6 +18,6 @@ class Laser:
             if self.hp <= 0:
                 self.color = (0,0,255)
 
-    def update(self):
+    def update(self, dt=1/DESIGN_FPS):
         if self.cooldown > 0:
-            self.cooldown -= 1
+            self.cooldown -= dt * DESIGN_FPS

@@ -78,10 +78,10 @@ class Room:
 
     def get_tile_rect(self, x, y):
         return pygame.Rect(
-            self.world_x + x * 32,
-            self.world_y + y * 32,
-            32,
-            32
+            self.world_x + x * TILE_SIZE,
+            self.world_y + y * TILE_SIZE,
+            TILE_SIZE,
+            TILE_SIZE
         )
     
     def rotation_to_direction(self, rotation):
@@ -105,7 +105,6 @@ class Room:
                 if tile == "shortSpike" or tile == "tallSpike":
                     depth = props.get("depth", 16)
                     
-                    # TODO: make tile metadata instead of js hogging off of render_cache
                     cached = self.render_cache.get((x, y))
                     if cached:
                         img, rotation = cached
@@ -156,7 +155,6 @@ class Room:
 
         DOOR_POS = [7, 8]
         DOOR_DEPTH = 1
-        TILE_SIZE = 32
 
         for direction, data in self.doors.items():
             if data["type"] != "door":

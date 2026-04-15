@@ -29,7 +29,7 @@ class Button(Entity):
         if (self.game.player.vel != vec(0, 0)):
             direction = self.game.player.vel.normalize()
             
-            self.game.player.vel += -direction * 30
+            self.game.player.vel += -direction * 7.5
             self.game.player.dashFrames = 6
             self.game.player.isDashing = False
 
@@ -52,6 +52,6 @@ class Button(Entity):
         self.changeAnim(3)
         self.room.trigger_event("button")
 
-    def update(self):
-        self.updateEntity()
-        self.renderAnim()
+    def update(self, dt=1/DESIGN_FPS):
+        self.updateEntity(dt)
+        self.renderAnim(dt)

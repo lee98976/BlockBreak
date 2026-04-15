@@ -34,12 +34,13 @@ class Bullie(Entity):
             return vec(0, 0)
         return diff.normalize()
 
-    def updateState(self):
+    def updateState(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
         if self.state == "idle":
-            self.attackCooldown -= 1
+            self.attackCooldown -= frame
 
             # slight drift
-            self.vel *= 0.9
+            self.vel *= 0.9 ** frame
 
             if self.attackCooldown <= 0:
                 self.state = "telegraph"
@@ -47,8 +48,8 @@ class Bullie(Entity):
 
         elif self.state == "telegraph":
             # slow to stop
-            self.vel *= 0.7
-            self.stateTimer -= 1
+            self.vel *= 0.7 ** frame
+            self.stateTimer -= frame
 
             if self.stateTimer <= 0:
                 self.state = "shoot"
@@ -64,16 +65,16 @@ class Bullie(Entity):
                 self.stateTimer = 30
 
         elif self.state == "cooldown":
-            self.vel *= 0.8
-            self.stateTimer -= 1
+            self.vel *= 0.8 ** frame
+            self.stateTimer -= frame
 
             if self.stateTimer <= 0:
                 self.state = "telegraph"
                 self.stateTimer = 40
 
         elif self.state == "self_launch":
-            self.stateTimer -= 1
-            self.vel *= 0.6
+            self.stateTimer -= frame
+            self.vel *= 0.6 ** frame
 
             if self.stateTimer <= 0:
                 self.becomeProjectile()
@@ -86,7 +87,7 @@ class Bullie(Entity):
         direction = direction.normalize()
 
         # spawn projectile (reuse Bullie as projectile or separate class later)
-        proj = BullieProjectile(self.game, self.pos, direction * 4)
+        proj = BullieProjectile(self.game, self.pos, direction * 1)
         proj.changeAnim(1 + self.ammo)
         proj.defaultAnim = 1 + self.ammo
         self.game.enemy_sprites.add(proj)
@@ -97,7 +98,7 @@ class Bullie(Entity):
         direction = self.getDirection()
 
         self.projectileMode = True
-        self.vel = direction * 8
+        self.vel = direction * 2
         self.dead = True # let it delete itself
 
         self.changeAnim(1)  # reuse projectile anim
@@ -116,32 +117,33 @@ class Bullie(Entity):
         direction = (self.pos - player.pos)
 
         if direction.length() > 0:
-            self.vel += direction.normalize() * 6
+            self.vel += direction.normalize() * 1.5
 
     def onDeath(self):
         self.isHarmful = False
         self.changeAnim(6)
 
 
-    def update(self):
+    def update(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
         if not self.room.discovered or self.game.dialogue.active: return
-        self.renderAnim()
+        self.renderAnim(dt)
 
         if not self.dead:
             if not self.projectileMode:
-                self.updateState()
+                self.updateState(dt)
             else:
                 # projectile mode: just move fast
-                self.vel *= 0.99
+                self.vel *= 0.99 ** frame
 
             if self.projectileMode:
-                self.pos += self.vel
+                self.pos += self.vel * frame
                 self.rect.center = self.pos
             else:
-                self.updateEntity()
+                self.updateEntity(dt)
 
         else:
-            self.deleteTimer -= 1
+            self.deleteTimer -= frame
             if self.deleteTimer <= 0:
                 if random.random() < 0.3:
                     hp = HealthPack(self.game, self.pos)

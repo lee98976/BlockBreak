@@ -4,7 +4,7 @@ import pygame
 from entity import Entity
 from entities.reddie import Reddie
 from entities.bullie import Bullie
-from storage.gameVars import vec
+from storage.gameVars import DESIGN_FPS, FPS, vec
 
 class MiniBoss(Entity):
     def __init__(self, game, player, enemy_group, pos):
@@ -36,12 +36,13 @@ class MiniBoss(Entity):
     def onDeath(self):
         self.changeAnim(1)
 
-    def update(self):
+    def update(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
         if not self.dead:
-            self.pos.x += math.sin(pygame.time.get_ticks()/400)*0.3
+            self.pos.x += math.sin(pygame.time.get_ticks()/400)*0.075
         else:
-            self.deleteTimer -= 1
+            self.deleteTimer -= frame
             if self.deleteTimer <= 0:
                 self.kill()
-        self.renderAnim()
-        self.updateEntity()
+        self.renderAnim(dt)
+        self.updateEntity(dt)

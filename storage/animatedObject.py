@@ -2,7 +2,7 @@ import pygame
 import math
 from pygame.locals import *
 
-from storage.gameVars import *
+from storage.gameVars import DESIGN_FPS
 
 class AnimatedObject(pygame.sprite.Sprite):
     def __init__(self, animSet, rectDimensions=None):
@@ -20,19 +20,19 @@ class AnimatedObject(pygame.sprite.Sprite):
 
         self.currentAnim = 0
         self.curImageIndex = 0
-        self.frameTimer = self.anims[self.currentAnim][0][1]
+        self.frameTimer = self.anims[self.currentAnim][0][1] / DESIGN_FPS
 
     def changeAnim(self, newAnim):
         if newAnim == self.currentAnim:
             return
         self.currentAnim = newAnim
         self.curImageIndex = 0
-        self.frameTimer = self.anims[newAnim][0][1]
+        self.frameTimer = self.anims[newAnim][0][1] / DESIGN_FPS
 
-    def renderAnim(self):
+    def renderAnim(self, dt=1/DESIGN_FPS):
         anim = self.anims[self.currentAnim]
 
-        self.frameTimer -= 1
+        self.frameTimer -= dt
 
         # calculate the next frame
         if self.frameTimer <= 0:
@@ -45,7 +45,7 @@ class AnimatedObject(pygame.sprite.Sprite):
                     self.changeAnim(self.defaultAnim)
                     return
 
-            self.frameTimer = anim[self.curImageIndex][1]
+            self.frameTimer = anim[self.curImageIndex][1] / DESIGN_FPS
 
         currentFrame = self.images[anim[self.curImageIndex][0]]
 

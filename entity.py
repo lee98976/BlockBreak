@@ -6,7 +6,7 @@ from storage.animatedObject import AnimatedObject
 from storage.gameVars import *
 from storage.debugUtitlity import *
 
-TILE_SIZE = 32
+TILE_SIZE = TILE_SIZE
 
 class Entity(AnimatedObject):
     def __init__(self, game, animSet, name, hp, pos):
@@ -17,6 +17,7 @@ class Entity(AnimatedObject):
         self.invFrames = 0
         self.dead = False
         self.vel = vec(0, 0)
+        self.shakeOffset = vec(0, 0)
         
         self.pos = vec(pos)
         self.rect.center = self.pos
@@ -26,6 +27,7 @@ class Entity(AnimatedObject):
         self.pathTimer = 0
         self.throughNode = (0, 0)
         self.immuneToStatusEffects = False
+        self.contactWall = False
 
 
     def takeDamage(self, dmg, iFrames=30):
@@ -47,22 +49,25 @@ class Entity(AnimatedObject):
     def updateHealthBar(self):
         pass
 
-    def updateEntity(self):
+    def updateEntity(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
+        self.contactWall = False  # Reset wall contact at start of frame
+
         if self.invFrames > 0:
-            self.invFrames -= 1
+            self.invFrames -= frame
 
         if not self.immuneToStatusEffects:
-            self.apply_tile_effects()
+            self.apply_tile_effects(dt)
 
         # TODO, add random movement later
         if (self.room.discovered or self.game.player == self) and not self.game.dialogue.active:
             # X
-            self.pos.x += self.vel.x
+            self.pos.x += self.vel.x * frame
             self.rect.centerx = self.pos.x
             self.collide("x")
 
             # Y
-            self.pos.y += self.vel.y
+            self.pos.y += self.vel.y * frame
             self.rect.centery = self.pos.y
             self.collide("y")
 
@@ -76,9 +81,11 @@ class Entity(AnimatedObject):
             if not self.rect.colliderect(wall):
                 continue
 
+            self.contactWall = True  # Mark that we hit a wall
+
             # detect spikes
-            tile_x = int((wall.x - room.world_x) // 32)
-            tile_y = int((wall.y - room.world_y) // 32)
+            tile_x = int((wall.x - room.world_x) // TILE_SIZE)
+            tile_y = int((wall.y - room.world_y) // TILE_SIZE)
 
             tile = room.tiles[tile_y][tile_x]
             props = self.game.tile_properties.get(tile, {})
@@ -192,7 +199,7 @@ class Entity(AnimatedObject):
 
         return []
 
-    def get_navigation_target(self, target_pos):
+    def get_navigation_target(self, target_pos, dt=1/DESIGN_FPS):
         room = self.game.get_current_room(self)
 
         # default behavior = direct movement
@@ -219,7 +226,8 @@ class Entity(AnimatedObject):
                 return self.pos, True
 
         # if not in line of sight, pathfind 
-        self.pathTimer -= 1
+        frame = dt * DESIGN_FPS
+        self.pathTimer -= frame
 
         if self.pathTimer <= 0 or not self.path:
             start = self.world_to_grid(room, self.pos)
@@ -349,7 +357,7 @@ class Entity(AnimatedObject):
         best = min(exits, key=lambda t: (self.grid_to_world(current_room, *t) - self.pos).length())
         return self.grid_to_world(current_room, *best), direction
     
-    def apply_tile_effects(self):
+    def apply_tile_effects(self, dt=1/DESIGN_FPS):
         room = self.game.get_current_room(self)
 
         gx, gy = self.world_to_grid(room, self.pos)
@@ -362,7 +370,8 @@ class Entity(AnimatedObject):
 
         # --- slow (water) ---
         if "slow" in props:
-            self.vel *= props["slow"]
+            frame = dt * DESIGN_FPS
+            self.vel *= props["slow"] ** frame
 
         # --- damage (lava / spikes) --- TODO bandaid fix
         if "damage" in props and tile != "shortSpike" and tile != "tallSpike":

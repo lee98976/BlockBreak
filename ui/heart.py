@@ -1,5 +1,6 @@
 import pygame
 from storage.animatedObject import AnimatedObject
+from storage.gameVars import DESIGN_FPS, FPS
 
 class Heart(AnimatedObject):
     def __init__(self, animSet, pos):
@@ -18,6 +19,6 @@ class Heart(AnimatedObject):
         self.changeAnim(2)
         self.defaultAnim = 0
     
-    def update(self):
-        self.renderAnim()
+    def update(self, dt=1/DESIGN_FPS):
+        self.renderAnim(dt)
         self.rect.center = self.pos

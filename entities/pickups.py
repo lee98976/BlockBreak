@@ -9,6 +9,6 @@ class HealthPack(AnimatedObject):
         super().__init__(game.healthPackSet)
         self.pos = vec(pos)
 
-    def update(self):
-        self.renderAnim()
+    def update(self, dt=1/DESIGN_FPS):
+        self.renderAnim(dt)
         self.rect.center = self.pos

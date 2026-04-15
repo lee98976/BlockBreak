@@ -19,7 +19,7 @@ from generation.door import *
 from generation.button import *
 from levels.level1 import *
 
-def build_animset(animSet, scale=4):
+def build_animset(animSet, scale=1):
     return {
         **animSet,
         "images": [processImage(path, scale) for path in animSet["img_paths"]]
@@ -80,12 +80,12 @@ class Game:
             "shortSpike": {
                 "collide": True,
                 "damage": 1,
-                "depth": 10
+                "depth": 2
             },
             "tallSpike": {
                 "collide": True,
                 "damage": 1,
-                "depth": 26
+                "depth": 6
             },
 
             "blackMetal": {"collide": True},
@@ -256,7 +256,7 @@ class Game:
 
     def initialize_entities(self):
         self.healthBar = HealthBar(self)
-        self.player = Player(self, self.healthBar, vec(240, 1450))
+        self.player = Player(self, self.healthBar, vec(60, 362))
         self.friendly_sprites.add(self.player)
         self.healthBar.updateHealth(self.player.hp)
 
@@ -558,8 +558,8 @@ class Game:
 
                 if room.tiles[y][x] == "empty":
                     return vec(
-                        room.world_x + x * 32 + 16,
-                        room.world_y + y * 32 + 16
+                        room.world_x + x * TILE_SIZE + TILE_SIZE / 2,
+                        room.world_y + y * TILE_SIZE + TILE_SIZE / 2
                     )
 
         # --- spawn reddies ---
@@ -658,7 +658,7 @@ class Game:
 
 
     def spawn_doors(self, room):
-        TILE = 32
+        TILE = TILE_SIZE
 
         door_positions = {
             "up": [(7,0),(8,0)],
@@ -681,7 +681,7 @@ class Game:
                 self.interactables.add(door)
     
     def spawn_button(self, room, tx, ty):
-        TILE = 32
+        TILE = TILE_SIZE
 
         world_pos = (
             room.world_x + tx * TILE + TILE // 2,

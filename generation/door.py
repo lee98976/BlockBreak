@@ -15,5 +15,5 @@ class Door(Entity):
     def open(self):
         self.room.openDoor(self.direction)
 
-    def update(self):
-        self.renderAnim()
+    def update(self, dt=1/DESIGN_FPS):
+        self.renderAnim(dt)

@@ -15,8 +15,9 @@ class DashTrail(Entity):
         self.pos = self.owner.pos
         self.changeAnim(0)
 
-    def update(self):
-        self.life -= 1
+    def update(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
+        self.life -= frame
         
 
         self.pos = self.owner.pos
@@ -26,4 +27,4 @@ class DashTrail(Entity):
             self.kill()
             return
 
-        self.renderAnim()
+        self.renderAnim(dt)

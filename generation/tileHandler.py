@@ -43,7 +43,7 @@ class TileHandler:
             else:
                 continue
 
-            img = processImage(os.path.join(path, file), 4)
+            img = processImage(os.path.join(path, file), 1)
 
             tiles.setdefault(material, {})
             tiles[material].setdefault(shape, {})
@@ -192,24 +192,24 @@ class TileHandler:
 
                 rect = self.get_tile_rect(room.world_x, room.world_y, x, y)
 
+                # full float calculation FIRST
+                pos = rect.topleft - camera + pygame.Vector2(WIDTH/2, HEIGHT/2) + self.game.screen_shake_offset
 
-                offset = rect.topleft - camera + pygame.Vector2(WIDTH/2, HEIGHT/2)
-                screen_pos = (offset.x, offset.y)
+                # THEN snap once at the very end
+                draw_pos = (int(pos.x), int(pos.y))
 
                 img, rotation = self.get_tile_image(room, x, y)
 
                 if img:
-                    self.game.screen.blit(img, screen_pos + self.game.screen_shake_offset)
-
-                # draw_debug_rect(self.game.screen, rect, self.game.camera)
+                    self.game.screen.blit(img, draw_pos)
 
 
     def get_tile_rect(self, world_x, world_y, x, y):
         return pygame.Rect(
-            world_x + x * 32,
-            world_y + y * 32,
-            32,
-            32
+            world_x + x * TILE_SIZE,
+            world_y + y * TILE_SIZE,
+            TILE_SIZE,
+            TILE_SIZE
         )
     
     def is_solid(self, grid, x, y):

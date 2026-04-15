@@ -4,7 +4,7 @@ import pygame
 from entity import Entity
 from entities.laser import Laser
 from entities.reddie import Reddie
-from storage.gameVars import vec
+from storage.gameVars import DESIGN_FPS, FPS, vec
 
 class Boss(Entity):
     def __init__(self, game, pos):
@@ -30,25 +30,26 @@ class Boss(Entity):
         self.active = False
         self.changeAnim(2)
 
-    def update(self):
-        self.renderAnim()
-        self.updateEntity()
+    def update(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
+        self.renderAnim(dt)
+        self.updateEntity(dt)
         if self.mag < self.goToMag:
-            self.mag += 0.02
+            self.mag += 0.02 * frame
             if self.mag >= self.goToMag:
                 self.goToMag = 0.5
         else:
-            self.mag -= 0.02
+            self.mag -= 0.02 * frame
             if self.mag <= self.goToMag:
                 self.goToMag = 1.5
         if self.switchTimer <= 0:
             self.CW *= -1
             self.switchTimer = random.randint(300, 600)
         if not self.dead:
-            self.pos.y = 80 + math.sin(pygame.time.get_ticks()/500)*5
+            self.pos.y = 80 + math.sin(pygame.time.get_ticks()/500)*1.25
         else:
-            self.deleteTimer -= 1
-            self.switchTimer -= 1
+            self.deleteTimer -= frame
+            self.switchTimer -= frame
             if self.deleteTimer < 0:
                 self.active = False
                 self.kill()
@@ -58,11 +59,11 @@ class Boss(Entity):
                 e = Reddie(self.game, 1, self.game.player, 0.5, pos)
                 self.game.enemy_sprites.add(e)
                 self.spawnTimer = 90
-            self.spawnTimer -= 1
-            self.angle += 0.005 * self.CW * self.mag
+            self.spawnTimer -= frame
+            self.angle += 0.005 * self.CW * self.mag * frame
             for l in self.lasers:
-                l.angle += 0.005 * self.CW * self.mag
-                l.update()
+                l.angle += 0.005 * self.CW * self.mag * frame
+                l.update(dt)
 
     def drawLasers(self, screen):
         if not self.active:

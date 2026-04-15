@@ -23,26 +23,27 @@ class Player(Entity):
         self.lastRoom = self.game.get_current_room(self)
         self.lastRoom.trigger_event("enter")
 
-    def posUpdate(self):
+    def posUpdate(self, dt=1/DESIGN_FPS):
         self.desiredVel = vec(0,0)
 
         if self.isDashing:
             self.desiredVel = self.dashVector
-            self.dashVector *= 0.94
+            frame = dt * DESIGN_FPS
+            self.dashVector *= 0.94 ** frame
         else:
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[K_LEFT]:
                 self.lastInput = K_LEFT
-                self.desiredVel.x = -2
+                self.desiredVel.x = -0.5
             if pressed_keys[K_RIGHT]:
                 self.lastInput = K_RIGHT
-                self.desiredVel.x = 2
+                self.desiredVel.x = 0.5
             if pressed_keys[K_UP]:
                 self.lastInput = K_UP
-                self.desiredVel.y = -2
+                self.desiredVel.y = -0.5
             if pressed_keys[K_DOWN]:
                 self.lastInput = K_DOWN
-                self.desiredVel.y = 2
+                self.desiredVel.y = 0.5
 
 
     def dash(self):
@@ -52,7 +53,7 @@ class Player(Entity):
             self.isDashing = True
             self.dashFrames = 13
             self.dashVector = vec(0,0)
-            dashSpeed = 13
+            dashSpeed = 3.25
 
             totalPressed = 0
             if pressed_keys[K_LEFT]:
@@ -111,26 +112,42 @@ class Player(Entity):
                 room.doors[d]["open"] = False
             room.update_door_rects()
 
-    def update(self):
-        self.renderAnim()
+    def update(self, dt=1/DESIGN_FPS):
+        frame = dt * DESIGN_FPS
+        self.renderAnim(dt)
 
         if not self.dead:
-            self.posUpdate()
+            self.posUpdate(dt)
             self.dash()
             self.checkRoomSwitch()
 
-            # update entity depends on self.vel
-            mult = 1
-            if self.vel.magnitude() > self.desiredVel.magnitude(): mult = 0.2
-            else: mult = 0.8
-            self.vel += (self.desiredVel - self.vel) * mult
-            # print("v", self.vel)
+            frame = dt * DESIGN_FPS
+
+            if self.isDashing:
+                self.vel = self.desiredVel
+                pass
+            else:
+                if self.desiredVel.length() > 0:
+                    # accelerating
+                    rate = 0.25
+                else:
+                    # stopping
+                    rate = 0.4
+
+                alpha = 1 - pow(1 - rate, frame)
+                self.vel += (self.desiredVel - self.vel) * alpha
+
+                # optional overspeed clamp
+                if self.vel.length() > self.desiredVel.length() and self.desiredVel.length() > 0:
+                    brake = 0.5
+                    alpha = 1 - pow(1 - brake, frame)
+                    self.vel += (self.desiredVel - self.vel) * alpha
 
             self.immuneToStatusEffects = self.isDashing
-            self.updateEntity()
-            self.dashFrames -= 1
+            self.updateEntity(dt)
+            self.dashFrames -= frame
         else:
-            self.despawnTime -= 1
+            self.despawnTime -= frame
             if self.despawnTime <= 0:
                 pygame.quit()
                 sys.exit()

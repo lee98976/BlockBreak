@@ -11,8 +11,10 @@ from entities.pickups import HealthPack
 pygame.init()
 clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Alyss")
+realScreen = pygame.display.set_mode((WIDTH * UPSCALE, HEIGHT * UPSCALE))
+screen = pygame.Surface((WIDTH, HEIGHT))
+
+pygame.display.set_caption("Block Dash")
 
 game = Game(screen)
 
@@ -65,10 +67,15 @@ while True:
     game.update_camera()
     screen.fill((255, 255, 255))
 
-    game.friendly_sprites.update()
-    game.enemy_sprites.update()
-    game.ui_sprites.update()
-    game.interactables.update()
+    dt = clock.tick(FPS) / 1000.0
+    game.friendly_sprites.update(dt)
+    game.enemy_sprites.update(dt)
+    game.ui_sprites.update(dt)
+    game.interactables.update(dt)
+
+    cam = game.camera
+    center = vec(WIDTH / 2, HEIGHT / 2)
+    offset = vec(int(offset.x), int(offset.y))  # ensure integer
 
     # TODO: smart loading AND smart enemy rendering
     for room in game.rooms.values():
@@ -76,25 +83,35 @@ while True:
         game.tileHandler.draw(room, game.camera)
 
     for s in game.ui_sprites:
-        screen.blit(s.image, s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
+        pos = s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        draw_pos = (int(pos.x), int(pos.y))
+        screen.blit(s.image, draw_pos)
     for s in game.interactables:
-        screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
+        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        draw_pos = (int(pos.x), int(pos.y))
+        screen.blit(s.image, draw_pos)
     for s in game.friendly_sprites:
-        screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
-        # draw_debug_rect(screen, s.rect, game.camera)
+        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        draw_pos = (int(pos.x), int(pos.y))
+        screen.blit(s.image, draw_pos)
     for s in game.enemy_sprites:
-        screen.blit(s.image, s.rect.topleft - game.camera + vec(WIDTH / 2, HEIGHT / 2) - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset)
-        # draw_debug_rect(screen, s.rect, game.camera)
+        pos = s.rect.topleft + s.shakeOffset - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        draw_pos = (int(pos.x), int(pos.y))
+        screen.blit(s.image, draw_pos)
 
     # dialogue rendering!
-    game.dialogue.update()
+    game.dialogue.update(dt)
     game.dialogue.draw()
 
-    # TODO
-    # game.boss.drawLasers(screen)
+    scaled = pygame.transform.scale(screen, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
+    realScreen.blit(scaled, (0,0))
+
+
+
+    # TODO draw boss lasers
+
     pygame.display.update()
     game.gameTime += 1
-    clock.tick(FPS)
 
     # room = game.get_current_room()
     

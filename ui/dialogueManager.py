@@ -58,7 +58,7 @@ class DialogueManager:
         self.portrait.changeAnim(anim)
         self.portrait.defaultAnim = anim
 
-    def update(self):
+    def update(self, dt=1/DESIGN_FPS):
         if not self.active:
             return
 
@@ -70,11 +70,13 @@ class DialogueManager:
         full_text = entry["text"]
 
         # typewriter
-        self.text_timer += 1
-        speed = 2
+        speed = 30  # characters per second
+        self.text_timer += dt * speed
 
-        chars = self.text_timer // speed
+        chars = int(self.text_timer)
         self.current_text = full_text[:chars]
+
+        self.portrait.renderAnim(dt)
 
     def handle_input(self, event):
         if not self.active:
@@ -87,7 +89,8 @@ class DialogueManager:
             # finish typing
             if self.current_text != full_text:
                 self.current_text = full_text
-                self.text_timer = len(full_text) * 2
+                speed = 30
+                self.text_timer = len(full_text)
             else:
                 self.index += 1
                 self.text_timer = 0
@@ -127,40 +130,46 @@ class DialogueManager:
         entry = self.dialogue[self.index]
 
         # --- dialogue box ---
-        rect = pygame.Rect(25, HEIGHT - 150, WIDTH - 50, 100)
+        BOX_PADDING = 4
+        BOX_HEIGHT = 48
+        rect = pygame.Rect(BOX_PADDING, HEIGHT - BOX_HEIGHT - BOX_PADDING, WIDTH - BOX_PADDING * 2, BOX_HEIGHT)
         pygame.draw.rect(screen, (20, 20, 30), rect)
-        pygame.draw.rect(screen, (200, 200, 255), rect, 3)
+        pygame.draw.rect(screen, (200, 200, 255), rect, 2)
 
         # --- portrait ---
         speaker = entry.get("speaker", "player")
         side = self.speaker_side.get(speaker, "left")
 
-        PORTRAIT_PADDING = 20
-
-        self.portrait.renderAnim()
+        PORTRAIT_PADDING = 4
         img = self.portrait.image
+        portrait_width = img.get_width()
+        portrait_height = img.get_height()
 
         if side == "left":
-            x = rect.x + PORTRAIT_PADDING
-            change = 100
+            img_x = rect.x + PORTRAIT_PADDING
+            text_x = img_x + portrait_width + PORTRAIT_PADDING * 2
         else:
-            x = rect.right - img.get_width() - PORTRAIT_PADDING
-            change = 20
+            img_x = rect.right - portrait_width - PORTRAIT_PADDING
+            text_x = rect.x + PORTRAIT_PADDING
 
-        y = rect.y + 20
-        self.portrait.renderAnim()
-        self.portrait.rect.topleft = (x, y)
+        img_y = rect.y + (rect.height - portrait_height) // 2
+        self.portrait.rect.topleft = (img_x, img_y)
 
         img = self.portrait.image
         if side == "right":
             img = pygame.transform.flip(img, True, False)
-        
+
         screen.blit(img, self.portrait.rect)
 
         # --- text ---
-        lines = self.wrap_text(self.current_text, self.font, rect.width - 120)
+        text_width = rect.width - portrait_width - PORTRAIT_PADDING * 4
+        if text_width < 16:
+            text_width = rect.width - PORTRAIT_PADDING * 2
+
+        lines = self.wrap_text(self.current_text, self.font, text_width)
+        line_height = self.font.get_linesize()
+        text_y = rect.y + PORTRAIT_PADDING
 
         for i, line in enumerate(lines):
             text_surf = self.font.render(line, True, (255, 255, 255))
-            
-            screen.blit(text_surf, (rect.x + change, rect.y + 20 + i * 24))
+            screen.blit(text_surf, (text_x, text_y + i * line_height))
