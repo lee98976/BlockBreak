@@ -80,7 +80,7 @@ while True:
     # TODO: smart loading AND smart enemy rendering
     for room in game.rooms.values():
         room.update()
-        game.tileHandler.draw(room, game.camera)
+        game.tileHandler.draw(room, game.camera, screen)
 
     for s in game.ui_sprites:
         pos = s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) // 2 + offset
@@ -99,15 +99,20 @@ while True:
         draw_pos = (int(pos.x), int(pos.y))
         screen.blit(s.image, draw_pos)
 
-    # dialogue rendering!
-    game.dialogue.update(dt)
-    game.dialogue.draw()
-
     # vfx rendering!
-    game.vfxManager.update() # TODO use shaders to disort larger screen
+    game.vfxManager.update(dt) # TODO use shaders to disort larger screen
 
-    vfx_surface = game.vfxManager.apply_shockwaves(screen)
-    scaled = pygame.transform.scale(vfx_surface, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
+
+    for p in game.vfxManager.particles:
+        p.draw(screen, cam)
+
+    screen = game.vfxManager.apply_shockwaves(screen)
+
+    # dialogue rendering! (should happen after vfx rendering)
+    game.dialogue.update(dt)
+    game.dialogue.draw(screen)
+
+    scaled = pygame.transform.scale(screen, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
     realScreen.blit(scaled, (0,0))
 
 

@@ -122,11 +122,10 @@ class DialogueManager:
 
         return lines
     
-    def draw(self):
+    def draw(self, screen):
         if not self.active or self.index >= len(self.dialogue):
             return
 
-        screen = self.game.screen
         entry = self.dialogue[self.index]
 
         # --- dialogue box ---

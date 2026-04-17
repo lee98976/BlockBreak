@@ -34,6 +34,15 @@ class MiniBoss(Entity):
             self.spawnWave()
 
     def onDeath(self):
+        self.game.vfxManager.add_particles(
+            pos=self.pos,
+            count=24,
+            start_color=(255, 140, 60),
+            end_color=(180, 40, 10),
+            size=3,
+            gravity=True,
+            floaty=False
+        )
         self.changeAnim(1)
 
     def update(self, dt=1/DESIGN_FPS):

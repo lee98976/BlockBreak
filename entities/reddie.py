@@ -121,6 +121,15 @@ class Reddie(Entity):
             self.shakeOffset = vec(0, 0)
 
     def onDeath(self):
+        self.game.vfxManager.add_particles(
+            pos=self.pos,
+            count=6,
+            start_color=(255, 120, 40),
+            end_color=(180, 30, 10),
+            size=1,
+            gravity=True,
+            floaty=False
+        )
         self.following = None
         self.isHarmful = False
         self.changeAnim(4)

@@ -183,7 +183,7 @@ class TileHandler:
         return room.render_cache[key]
     
 
-    def draw(self, room, camera):
+    def draw(self, room, camera, screen):
         for y, row in enumerate(room.tiles):
             for x, tile in enumerate(row):
 
@@ -201,7 +201,7 @@ class TileHandler:
                 img, rotation = self.get_tile_image(room, x, y)
 
                 if img:
-                    self.game.screen.blit(img, draw_pos)
+                    screen.blit(img, draw_pos)
 
 
     def get_tile_rect(self, world_x, world_y, x, y):

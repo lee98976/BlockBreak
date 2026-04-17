@@ -27,6 +27,15 @@ class Boss(Entity):
         self.changeAnim(1)
 
     def onDeath(self):
+        self.game.vfxManager.add_particles(
+            pos=self.pos,
+            count=28,
+            start_color=(255, 140, 60),
+            end_color=(180, 40, 10),
+            size=3,
+            gravity=True,
+            floaty=False
+        )
         self.active = False
         self.changeAnim(2)
 

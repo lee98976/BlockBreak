@@ -120,6 +120,15 @@ class Bullie(Entity):
             self.vel += direction.normalize() * 1.5
 
     def onDeath(self):
+        self.game.vfxManager.add_particles(
+            pos=self.pos,
+            count=18,
+            start_color=(255, 120, 40),
+            end_color=(180, 30, 10),
+            size=2,
+            gravity=True,
+            floaty=False
+        )
         self.isHarmful = False
         self.changeAnim(6)
 

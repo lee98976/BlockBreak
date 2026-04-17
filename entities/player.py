@@ -49,7 +49,7 @@ class Player(Entity):
     def dash(self):
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[K_x] and self.dashFrames < -5 and not self.isDashing:
-            self.game.vfxManager.add_shockwave(self.pos)
+            self.game.vfxManager.add_shockwave(pos=self.pos)
             self.changeAnim(1)
             self.isDashing = True
             self.dashFrames = 13
@@ -122,10 +122,9 @@ class Player(Entity):
             self.dash()
             self.checkRoomSwitch()
 
-            frame = dt * DESIGN_FPS
-
             if self.isDashing:
                 self.vel = self.desiredVel
+                self.game.vfxManager.add_particles(self.pos, 1)
                 pass
             else:
                 if self.desiredVel.length() > 0:

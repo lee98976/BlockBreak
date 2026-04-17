@@ -1,14 +1,42 @@
 import pygame
+import random
 from storage.gameVars import *
 from vfx.shockWave import *
+from vfx.particle import *
 
 class vfxManager():
     def __init__(self, game):
         self.game = game
         self.shockwaves = []
+        self.particles = []
 
-    def add_shockwave(self, pos):
-        self.shockwaves.append(Shockwave(pos))
+    def add_shockwave(self, pos, radius=0, speed=0.5, thickness=14, strength=3):
+        self.shockwaves.append(Shockwave(
+            pos=pos,
+            radius=radius,
+            speed=speed,
+            thickness=thickness,
+            strength=strength
+        ))
+
+    def add_particles(self, pos, count=10,
+                      start_color=(0, 0, 255), end_color=(0, 150, 255),
+                      size=1, gravity=False, floaty=True, posRange=1.5):
+        for _ in range(count):
+            vel = vec(random.uniform(0, 0), random.uniform(0, 0))
+
+            p = Particle(
+                pos=pos + vec(random.uniform(-posRange, posRange), random.uniform(-posRange, posRange)),
+                vel=vel,
+                lifetime=random.randint(20, 25),
+                start_color=start_color,
+                end_color=end_color,
+                size=size,
+                gravity=gravity,
+                floaty=floaty
+            )
+
+            self.particles.append(p)
 
     def apply_shockwaves(self, surface):
         w, h = surface.get_size()
@@ -73,11 +101,25 @@ class vfxManager():
 
         return result
     
-    def update(self):
+    def update(self, dt=1/DESIGN_FPS):
+        # shockwaves
         i = 0
         while i < len(self.shockwaves):
-            self.shockwaves[i].update()
-            if not self.shockwaves[i].alive:  self.shockwaves.pop(i)
-            else: i += 1
+            self.shockwaves[i].update(dt)
+            if not self.shockwaves[i].alive:
+                self.shockwaves.pop(i)
+            else:
+                i += 1
+
+        # particles
+        i = 0
+        while i < len(self.particles):
+            p = self.particles[i]
+            p.update(dt)
+
+            if p.lifetime <= 0:
+                self.particles.pop(i)
+            else:
+                i += 1
 
             

@@ -26,11 +26,21 @@ class Button(Entity):
 
         if (oldHp == self.hp): return
 
+        self.game.vfxManager.add_particles(
+            pos=self.pos,
+            count=12,
+            start_color=(255, 220, 120),
+            end_color=(255, 130, 30),
+            size=2,
+            gravity=True,
+            floaty=False
+        )
+
         if (self.game.player.vel != vec(0, 0)):
             direction = self.game.player.vel.normalize()
             
-            self.game.player.vel += -direction * 7.5
-            self.game.player.dashFrames = 6
+            self.game.player.vel += -direction * 12.0
+            self.game.player.dashFrames = 10
             self.game.player.isDashing = False
 
             print(self.game.player.vel)
