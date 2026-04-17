@@ -49,6 +49,7 @@ class Player(Entity):
     def dash(self):
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[K_x] and self.dashFrames < -5 and not self.isDashing:
+            self.game.vfxManager.add_shockwave(self.pos)
             self.changeAnim(1)
             self.isDashing = True
             self.dashFrames = 13

@@ -18,6 +18,7 @@ from generation.tileHandler import *
 from generation.door import *
 from generation.button import *
 from levels.level1 import *
+from vfx.vfxManager import *
 
 def build_animset(animSet, scale=1):
     return {
@@ -199,6 +200,9 @@ class Game:
         self.camera = vec(0, 0)
         self.camera_lerp = 0.1  # smoothing strength
         self.camera_max_offset = 300 # used to be 120
+
+        # vfx
+        self.vfxManager = vfxManager(self)
     
     def buildAnimSets(self):
         self.playerAnimSet = build_animset(self.playerAnimSet)
@@ -236,13 +240,33 @@ class Game:
         center = self.get_room_center()
         player_pos = self.player.pos
 
+        # --- base offset (your existing system) ---
         offset = player_pos - center
 
-        # clamp offset (this is your "edge push")
         offset.x = max(-self.camera_max_offset, min(self.camera_max_offset, offset.x))
         offset.y = max(-self.camera_max_offset, min(self.camera_max_offset, offset.y))
 
-        return center + offset * 0.25
+        # --- LOOKAHEAD SYSTEM (new) ---
+        # initialize if needed
+        if not hasattr(self, "lookahead"):
+            self.lookahead = vec(0, 0)
+
+        # target based on velocity
+        lookahead_target = self.player.vel * 6
+
+        # clamp target (prevents dash spikes)
+        MAX_LOOKAHEAD = 5
+        if lookahead_target.length() > MAX_LOOKAHEAD:
+            lookahead_target.scale_to_length(MAX_LOOKAHEAD)
+
+        # smooth toward target
+        self.lookahead += (lookahead_target - self.lookahead) * 0.15
+
+        # slight damping (prevents jitter when stopping)
+        self.lookahead *= 0.95
+
+        # --- final camera target ---
+        return center + offset * 0.25 + self.lookahead
     
     def update_camera(self):
         target = self.get_camera_target()

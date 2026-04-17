@@ -83,19 +83,19 @@ while True:
         game.tileHandler.draw(room, game.camera)
 
     for s in game.ui_sprites:
-        pos = s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        pos = s.rect.topleft - (vec(s.image.get_size()) - vec(s.rect.size)) // 2 + offset
         draw_pos = (int(pos.x), int(pos.y))
         screen.blit(s.image, draw_pos)
     for s in game.interactables:
-        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) // 2 + offset
         draw_pos = (int(pos.x), int(pos.y))
         screen.blit(s.image, draw_pos)
     for s in game.friendly_sprites:
-        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        pos = s.rect.topleft - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) // 2 + offset
         draw_pos = (int(pos.x), int(pos.y))
         screen.blit(s.image, draw_pos)
     for s in game.enemy_sprites:
-        pos = s.rect.topleft + s.shakeOffset - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) / 2 + offset
+        pos = s.rect.topleft + s.shakeOffset - cam + center - (vec(s.image.get_size()) - vec(s.rect.size)) // 2 + offset
         draw_pos = (int(pos.x), int(pos.y))
         screen.blit(s.image, draw_pos)
 
@@ -103,9 +103,12 @@ while True:
     game.dialogue.update(dt)
     game.dialogue.draw()
 
-    scaled = pygame.transform.scale(screen, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
-    realScreen.blit(scaled, (0,0))
+    # vfx rendering!
+    game.vfxManager.update() # TODO use shaders to disort larger screen
 
+    vfx_surface = game.vfxManager.apply_shockwaves(screen)
+    scaled = pygame.transform.scale(vfx_surface, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
+    realScreen.blit(scaled, (0,0))
 
 
     # TODO draw boss lasers
