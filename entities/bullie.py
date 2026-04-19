@@ -10,7 +10,7 @@ from entities.bullieProjectile import BullieProjectile
 
 class Bullie(Entity):
     def __init__(self, game, pos, target):
-        super().__init__(game, game.bullieAnimSet, "Bullie", 4, pos)
+        super().__init__(game, game.bullieAnimSet, "Bullie", 2, pos)
 
         self.target = target
         self.state = "idle"
@@ -19,12 +19,13 @@ class Bullie(Entity):
         self.attackCooldown = random.randint(60, 120)
 
         self.ammo = 1  # goes 1 → 4
-        self.maxAmmo = 4
+        self.maxAmmo = 1  # launch after 1 shot
 
         self.projectileMode = False
         self.isHarmful = True
 
         self.deleteTimer = 30
+        self.projectileLife = 0
 
         self.changeAnim(0)
 
@@ -100,6 +101,7 @@ class Bullie(Entity):
         self.projectileMode = True
         self.vel = direction * 2
         self.dead = True # let it delete itself
+        self.projectileLife = 120  # same as BullieProjectile
 
         self.changeAnim(1)  # reuse projectile anim
 
@@ -143,6 +145,10 @@ class Bullie(Entity):
                 self.updateState(dt)
             else:
                 # projectile mode: just move fast
+                self.projectileLife -= frame
+                if self.projectileLife <= 0:
+                    self.kill()
+                    return
                 self.vel *= 0.99 ** frame
 
             if self.projectileMode:

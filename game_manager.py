@@ -17,7 +17,9 @@ from storage.imageUtility import *
 from generation.tileHandler import *
 from generation.door import *
 from generation.button import *
-from levels.level1 import *
+from levels.level1 import LEVEL_1_DATA
+from levels.level2 import LEVEL_2_DATA
+from ui.menu.menu import Menu
 from vfx.vfxManager import *
 
 def build_animset(animSet, scale=1):
@@ -27,11 +29,15 @@ def build_animset(animSet, scale=1):
     }
 
 class Game:
-    def __init__(self, screen):
+    def __init__(self, screen, level=1):
         self.gameTime = 0
 
+        self.state = "menu"   # "menu" or "game"
+        self.menu = Menu(self)
+
+        """BELOW IS ACTUAL GAME LOGIC"""
         self.screen = screen
-        self.currentLevel = 1
+        self.currentLevel = level
 
         # manage entities
         self.friendly_sprites = pygame.sprite.Group()
@@ -108,93 +114,13 @@ class Game:
         self.room_width = WIDTH
         self.room_height = HEIGHT
 
+        # Load the current level
+        self.load_level(self.currentLevel)
+
         self.build_rooms()
-        self.initialize_entities()
+        self.initialize_entities() # make sure no enemies are initalized before player is
 
-        # TODO FIX HARDCODING, let level handle this later
-        self.attach_dialogue_to_room(self.rooms[(0, 2)], [
-            {"text": "Hmph..", "speaker": "player"},
-            {"text": "Of course that stupid boss ran away to this annoying little hideout.", "speaker": "player"},
-            {"text": "If he also brought his reddies over there, I'm so not ready.", "speaker" : "player"},
-            {"text": "Use arrow keys to move.", "speaker": "game"},
-        ])
-        self.attach_dialogue_to_room(self.rooms[(0, 1)], [
-            {"text": "Of course.", "speaker": "player"},
-            {"text": "Hey! What are you doi--", "speaker": "reddie"},
-            {"text": "Shut up you idiots. Actually, I'll make you.", "speaker" : "player"},
-            {"text": "Press [X] to dash into enemies.", "speaker": "game"},
-        ])
-        self.attach_dialogue_to_room(self.rooms[(0, 0)], [
-            {"text": "These ranged units are a bit annoying.", "speaker": "player"},
-            {"text": "Maybe address me by my name: Bullie!", "speaker": "bullie"},
-            {"text": "Cause I shoot bullets, get it?", "speaker" : "bullie"},
-            {"text": "No.", "speaker": "player"},
-        ])
-        self.attach_dialogue_to_room(self.rooms[(2, 0)], [
-            {"text": "Spikes too? Bro might be a little scared of me...", "speaker": "player"},
-        ])
-        self.attach_dialogue_to_room(self.rooms[(2, 1)], [
-            {"text": "Did he seriously put the button to his castle on his front door?", "speaker": "player"},
-            {"text": "I'm not blind.", "speaker": "player"},
-        ])
-        self.attach_dialogue_to_room(self.rooms[(1, 1)], [
-            {"text": "...", "speaker": "player"}
-        ])
-        self.attach_dialogue_to_room(self.rooms[(2, 2)], [
-            {"speaker": "player", "text": "Wait... this is the place."},
-            {"speaker": "player", "text": "He was supposed to be here."},
-
-            {"speaker": "reddie", "text": "Uh... about that."},
-            {"speaker": "reddie", "text": "He kinda... left."},
-
-            {"speaker": "player", "text": "...He WHAT?"},
-
-            {"speaker": "bullie", "text": "Yeah, he said something about..."},
-            {"speaker": "bullie", "text": "'not being ready for this build'."},
-
-            {"speaker": "player", "text": "...You're kidding."},
-
-            {"speaker": "reddie", "text": "Nope. He ran that way."},
-
-            {"speaker": "player", "text": "Great. Of course he ran through the metal walls."},
-            {"speaker": "player", "text": "Welp. I guess I gotta wait until the beta build comes out in April 12..."},
-            
-            {"text": "Hey.", "speaker": "game"},
-            {"text": "Thanks for watching.", "speaker": "game"},
-
-            {"text": "This project started out as merely an game for AP CSP.", "speaker": "game"},
-            {"text": "However, I noticed the potential in this game, and sought out to develop it.", "speaker": "game"},
-
-            {"text": "From the ground up in Pygame, I developed every single system.", "speaker": "game"},
-            {"text": "From things like animations, rendering, room events, dialogue, enemies, game mechanics,", "speaker": "game"},
-            {"text": "I have essentially created an entire game engine.", "speaker": "game"},
-
-            {"text": "Even something as simple as enemy movement required hundreds of lines to create.", "speaker": "game"},
-            {"text": "I utilized the well known algorithm A* to calculate pretty decent paths between two locations.", "speaker": "game"},
-
-            {"text": "Rooms track their own state, events, and progression.", "speaker": "game"},
-            {"text": "That’s how things like buttons and doors are able to work together.", "speaker": "game"},
-
-            {"text": "I also built the tile system from the ground up.", "speaker": "game"},
-            {"text": "I had to figure out how to tile, and what kind of tiles to use.", "speaker": "game"},
-            {"text": "They are all handdrawn, by the way.", "speaker": "game"},
-            {"text": "Note: Currently, I have five types of tiles", "speaker": "game"},
-            {"text": "But real games have so much more. It's going to be a long time before becoming a true 2D developer...", "speaker": "game"},
-
-            {"text": "Overall, a lot of this was challenging, and many bugs arose.", "speaker": "game"},
-            {"text": "But, the fun of the game is what made me strive to continue development.", "speaker": "game"},
-
-            {"text": "If there’s one thing I’m proud of,", "speaker": "game"},
-            {"text": "it’s that this is one of the first games I've developed", "speaker": "game"},
-            {"text": "to be robust and allow further additions easily.", "speaker": "game"},
-
-            {"text": "Thanks. Jacob Lee", "speaker": "game"},
-        ])
-        
-        self.attach_enemies_to_room(self.rooms[(0, 1)], self.generate_enemies_for_room(self.rooms[(0, 1)], 5, 0))
-        self.attach_enemies_to_room(self.rooms[(0, 0)], self.generate_enemies_for_room(self.rooms[(0, 0)], 2, 3))
-        self.attach_enemies_to_room(self.rooms[(1, 0)], self.generate_enemies_for_room(self.rooms[(1, 0)], 3, 1))
-        self.attach_enemies_to_room(self.rooms[(1, 1)], self.generate_enemies_for_room(self.rooms[(1, 1)], 0, 15))
+        self.apply_level_content()
 
         # camera!
         self.camera = vec(0, 0)
@@ -203,6 +129,22 @@ class Game:
 
         # vfx
         self.vfxManager = vfxManager(self)
+    
+    def load_level(self, level_number):
+        """Load level data based on level number"""
+        level_data_map = {
+            1: LEVEL_1_DATA,
+            2: LEVEL_2_DATA,
+        }
+        
+        level_data = level_data_map.get(level_number, LEVEL_1_DATA)  # Default to level 1
+        
+        self.level_layout = level_data["layout"]
+        self.level_rooms = level_data["rooms"]
+        self.level_doors = level_data["doors"]
+        self.level_dialogues = level_data.get("dialogues", {})
+        self.level_enemies = level_data.get("enemies", {})
+        self.player_spawn = level_data.get("player_spawn", [60, 362])
     
     def buildAnimSets(self):
         self.playerAnimSet = build_animset(self.playerAnimSet)
@@ -280,7 +222,7 @@ class Game:
 
     def initialize_entities(self):
         self.healthBar = HealthBar(self)
-        self.player = Player(self, self.healthBar, vec(60, 362))
+        self.player = Player(self, self.healthBar, vec(*self.player_spawn))
         self.friendly_sprites.add(self.player)
         self.healthBar.updateHealth(self.player.hp)
 
@@ -619,18 +561,18 @@ class Game:
         return room
 
     def build_rooms(self):
-        height = len(LEVEL_1_LAYOUT)
-        width = len(LEVEL_1_LAYOUT[0])
+        height = len(self.level_layout)
+        width = len(self.level_layout[0])
 
         self.world_layout = [[1 for _ in range(width)] for _ in range(height)]
 
         for y in range(height):
             for x in range(width):
-                room_type = LEVEL_1_ROOMS.get((x, y), "empty")
+                room_type = self.level_rooms.get((x, y), "empty")
 
                 room = Room(self, x, y, self.room_width, self.room_height)
 
-                door_config = ROOM_DOORS.get((x, y))
+                door_config = self.level_doors.get((x, y))
                 if door_config:
                     for d in ["up", "down", "left", "right"]:
                         room.doors[d]["type"] = door_config.get(d, "wall")
@@ -714,3 +656,16 @@ class Game:
 
         button = Button(self, room, world_pos)
         self.interactables.add(button)
+    
+    def apply_level_content(self):
+        """Apply dialogues and enemies from level data"""
+        # Apply dialogues
+        for room_coords, dialogue in self.level_dialogues.items():
+            if room_coords in self.rooms:
+                self.attach_dialogue_to_room(self.rooms[room_coords], dialogue)
+        
+        # Apply enemies
+        for room_coords, (num_reddies, num_bullies) in self.level_enemies.items():
+            if room_coords in self.rooms:
+                enemies = self.generate_enemies_for_room(self.rooms[room_coords], num_reddies, num_bullies)
+                self.attach_enemies_to_room(self.rooms[room_coords], enemies)
