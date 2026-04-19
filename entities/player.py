@@ -124,7 +124,8 @@ class Player(Entity):
 
             if self.isDashing:
                 self.vel = self.desiredVel
-                self.game.vfxManager.add_particles(self.pos, 1)
+                if self.game.gameTime % 2 == 0:
+                    self.game.vfxManager.add_particles(self.pos, 1)
                 pass
             else:
                 if self.desiredVel.length() > 0:

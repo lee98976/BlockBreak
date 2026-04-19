@@ -20,7 +20,7 @@ LEVEL_2_DOORS = {
 }
 
 LEVEL_2_DIALOGUES = {
-    (0,0): [{"text": "Welcome to level 2!", "speaker": "game"}],
+    (0,0): [{"text": "To be honest, this level is just here to demonstrate that the menu system actually works.", "speaker": "game"}],
 }
 
 LEVEL_2_ENEMIES = {

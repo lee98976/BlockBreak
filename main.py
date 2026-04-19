@@ -11,8 +11,8 @@ from entities.pickups import HealthPack
 pygame.init()
 clock = pygame.time.Clock()
 
-realScreen = pygame.display.set_mode((WIDTH * UPSCALE, HEIGHT * UPSCALE))
-screen = pygame.Surface((WIDTH, HEIGHT))
+realScreen = pygame.display.set_mode((WIDTH * UPSCALE, HEIGHT * UPSCALE), pygame.SRCALPHA)
+screen = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 
 pygame.display.set_caption("Block Dash")
 
@@ -25,18 +25,29 @@ while True:
     dt = clock.tick(FPS) / 1000.0
 
     # regular pygame exit check
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    for event in events:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if game.state == "game":
+                    game.capturePauseNextFrame = True
+                elif game.state == "pause":
+                    game.state = "game"
         
         game.dialogue.handle_input(event)
 
     if game.state == "menu":
         screen.fill((255, 255, 255))
-        game.menu.update(dt)
+        game.menu.update(events, dt)
         game.menu.draw(screen)
-
+    elif game.state == "pause":
+        screen.fill((255, 255, 255))
+        game.pauseMenu.update(events, dt)
+        game.pauseMenu.draw(screen)
     elif game.state ==  "game":
 
         # obselete boss code
@@ -72,12 +83,14 @@ while True:
             if game.player.isDashing:
                 obj.takeDamage(1)
 
+
         # rudimentary screen shake
         game.update_screen_shake()
         offset = game.screen_shake_offset
 
         game.update_camera()
         screen.fill((255, 255, 255))
+        realScreen.fill((255, 255, 255))
 
         game.friendly_sprites.update(dt)
         game.enemy_sprites.update(dt)
@@ -117,12 +130,7 @@ while True:
         for p in game.vfxManager.particles:
             p.draw(screen, cam)
 
-        screen = game.vfxManager.apply_shockwaves(screen)
-
-        # dialogue rendering! (should happen after vfx rendering)
-        game.dialogue.update(dt)
-        game.dialogue.draw(screen)
-
+        screen.blit(game.vfxManager.apply_shockwaves(screen), (0, 0))
 
 
         # TODO draw boss lasers
@@ -135,6 +143,36 @@ while True:
         # print("rect.center:", game.player.rect.center)
         # print("rect.topleft:", game.player.rect.topleft)
 
+    # fading
+    if game.fading:
+        game.fade_alpha += (256 - game.fade_alpha) * (game.fade_speed)
+
+        if game.fade_alpha >= 255:
+            game.fade_alpha = 0
+            game.fading = False
+
+            # switch state AFTER fade completes
+            game.state = game.fade_target
+            game.fade_target = None
+            print(game.state)
+    
+    if getattr(game, "capturePauseNextFrame", False):
+        game.pauseMenu.pauseSurface = screen.copy()
+        game.capturePauseNextFrame = False
+        game.state = "pause"
+    
+    if game.fade_alpha > 0:
+        fade_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        fade_surface.fill((0, 0, 0, int(game.fade_alpha)))
+        screen.blit(fade_surface, (0, 0))
+        print(game.fade_alpha)
+
     scaled = pygame.transform.scale(screen, (WIDTH * UPSCALE, HEIGHT * UPSCALE))
     realScreen.blit(scaled, (0,0))
+
+    # dialogue rendering! (should happen after vfx rendering)
+    if game.state == "game":
+        game.dialogue.update(dt)
+        game.dialogue.draw(realScreen, dt)
+
     pygame.display.update()

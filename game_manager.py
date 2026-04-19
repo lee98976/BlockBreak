@@ -20,6 +20,7 @@ from generation.button import *
 from levels.level1 import LEVEL_1_DATA
 from levels.level2 import LEVEL_2_DATA
 from ui.menu.menu import Menu
+from ui.menu.pauseMenu import PauseMenu
 from vfx.vfxManager import *
 
 def build_animset(animSet, scale=1):
@@ -33,7 +34,18 @@ class Game:
         self.gameTime = 0
 
         self.state = "menu"   # "menu" or "game"
+
+        self.menuStartAnimSet = menuStartAnimSet
+        self.buildMenuSets()
         self.menu = Menu(self)
+
+        self.pauseMenu = PauseMenu(self)
+
+        # fade effect
+        self.fade_alpha = 0
+        self.fading = False
+        self.fade_target = None  # "menu", "game", etc.
+        self.fade_speed = 0.025
 
         """BELOW IS ACTUAL GAME LOGIC"""
         self.screen = screen
@@ -146,6 +158,9 @@ class Game:
         self.level_enemies = level_data.get("enemies", {})
         self.player_spawn = level_data.get("player_spawn", [60, 362])
     
+    def buildMenuSets(self):
+        self.menuStartAnimSet = build_animset(self.menuStartAnimSet)
+
     def buildAnimSets(self):
         self.playerAnimSet = build_animset(self.playerAnimSet)
         self.enemyAnimSet = build_animset(self.enemyAnimSet)
@@ -555,8 +570,6 @@ class Game:
         for i in enemies:
             self.enemy_sprites.add(i)
             room.enemies.append(i)
-        
-            print(i.pos, i.hp)
 
         return room
 

@@ -1,3 +1,45 @@
+menuStartAnimSet = {
+    "img_paths": [
+        *[f"assets/menu/menuStart_{i}.png" for i in range(27)],
+        "assets/transparent.png"
+    ],
+
+    "anims": [
+        [
+            (0, 6),
+            (1, 6),
+            (2, 6),
+            (3, 6),
+            (4, 6),
+            (5, 6),
+            (6, 6),
+            (7, 6),
+            (8, 6),
+            (9, 6),
+            (10, 6),
+            (11, 6),
+            (12, 6),
+            (13, 6),
+            (14, 6),
+            (15, 6),
+            (16, 15),
+            (17, 15),
+            (18, 15),
+            (19, 15),
+            (20, 15),
+            (21, 10),
+            (22, 10),
+            (23, 60),
+            (24, 20),
+            (25, 20),
+            (26, 20),
+
+            # hold last frame
+            (27, 999999)
+        ]
+    ]
+}
+
 playerAnimSet = {
     "img_paths": [
         "assets/player/playerBasic.png",
